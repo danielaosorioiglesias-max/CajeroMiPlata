@@ -1,0 +1,749 @@
+/* ==========================================================================
+   1. VARIABLES DE COLOR (TEORÍA DEL COLOR: BANCA SOBRIA Y CONFIABLE)
+   ========================================================================== */
+:root,
+[data-theme="light"] {
+    /* Fondos y Superficies */
+    --bg-body: #f1f5f9;          /* Gris azulado muy claro (descanso visual) */
+    --bg-surface: #ffffff;       /* Blanco puro para tarjetas */
+    --bg-surface-alt: #f8fafc;   /* Contraste sutil para inputs y tablas */
+    --bg-navbar: #0f172a;        /* Azul marino profundo institucional */
+
+    /* Textos */
+    --text-primary: #0f172a;     /* Casi negro azulado para máxima legibilidad */
+    --text-secondary: #475569;   /* Gris pizarra para subtítulos */
+    --text-on-dark: #f8fafc;     /* Texto claro sobre navbar oscura */
+
+    /* Acentos Corporativos (Azul confianza + Cian tecnológico del logo) */
+    --color-primary: #1e3a8a;    /* Azul real bancario */
+    --color-primary-hover: #172554;
+    --color-accent: #0284c7;     /* Azul cian vibrante para detalles */
+    --color-accent-soft: rgba(2, 132, 199, 0.12);
+
+    /* Bordes y Sombras */
+    --border-color: #cbd5e1;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+    /* Semánticos de Retroalimentación */
+    --color-success: #10b981;
+    --bg-success: #ecfdf5;
+    --color-warning: #f59e0b;
+    --bg-warning: #fffbeb;
+    --color-danger: #ef4444;
+    --bg-danger: #fef2f2;
+}
+
+[data-theme="dark"] {
+    /* Fondos y Superficies en Modo Oscuro */
+    --bg-body: #090d16;          /* Azul noche profundo */
+    --bg-surface: #111827;       /* Gris/Azul oscuro para tarjetas */
+    --bg-surface-alt: #1f2937;   /* Superficie secundaria e inputs */
+    --bg-navbar: #030712;        /* Cabecera ultra oscura */
+
+    /* Textos */
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --text-on-dark: #f9fafb;
+
+    /* Acentos (Ajustados para alto contraste en fondo oscuro) */
+    --color-primary: #0284c7;
+    --color-primary-hover: #38bdf8;
+    --color-accent: #38bdf8;
+    --color-accent-soft: rgba(56, 189, 248, 0.15);
+
+    /* Bordes y Sombras */
+    --border-color: #374151;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.5);
+
+    /* Semánticos en Modo Oscuro */
+    --color-success: #34d399;
+    --bg-success: rgba(16, 185, 129, 0.15);
+    --color-warning: #fbbf24;
+    --bg-warning: rgba(245, 158, 11, 0.15);
+    --color-danger: #f87171;
+    --bg-danger: rgba(239, 68, 68, 0.15);
+}
+
+/* ==========================================================================
+   2. RESET Y ESTILOS BASE
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Utilidades de control para JavaScript */
+.oculto {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* ==========================================================================
+   3. NAVBAR / ENCABEZADO
+   ========================================================================== */
+.navbar {
+    background-color: var(--bg-navbar);
+    color: var(--text-on-dark);
+    padding: 0.85rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    border-bottom: 2px solid var(--color-accent);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.logo-hexagon {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%);
+    box-shadow: 0 0 12px var(--color-accent);
+}
+
+.brand-title {
+    display: block;
+    font-weight: 800;
+    font-size: 1.2rem;
+    letter-spacing: 1.5px;
+    line-height: 1.1;
+}
+
+.brand-subtitle {
+    display: block;
+    font-size: 0.68rem;
+    color: #94a3b8;
+    letter-spacing: 2px;
+}
+
+.navbar__menu {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    padding: 0.5rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-theme {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-on-dark);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.45rem 0.85rem;
+    border-radius: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    transition: background-color 0.2s;
+}
+
+.btn-theme:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+/* ==========================================================================
+   4. ALERTAS DE RETROALIMENTACIÓN
+   ========================================================================== */
+.alerta {
+    max-width: 1200px;
+    width: calc(100% - 2rem);
+    margin: 1rem auto 0;
+    padding: 0.9rem 1.25rem;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+    border-left: 5px solid transparent;
+    box-shadow: var(--shadow-sm);
+}
+
+.alerta--exito {
+    background-color: var(--bg-success);
+    color: var(--color-success);
+    border-left-color: var(--color-success);
+}
+
+.alerta--advertencia {
+    background-color: var(--bg-warning);
+    color: var(--color-warning);
+    border-left-color: var(--color-warning);
+}
+
+.alerta--error {
+    background-color: var(--bg-danger);
+    color: var(--color-danger);
+    border-left-color: var(--color-danger);
+}
+
+.alerta__cerrar {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* ==========================================================================
+   5. CONTENEDOR PRINCIPAL Y TARJETAS
+   ========================================================================== */
+.main-container {
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.75rem;
+    box-shadow: var(--shadow-md);
+}
+
+.card__header {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.85rem;
+}
+
+.card__header h2,
+.card__header h3 {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.card__header p {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    margin-top: 0.25rem;
+}
+
+/* ==========================================================================
+   6. LANDING PAGE (HERO Y PRODUCTOS)
+   ========================================================================== */
+.hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 3.5rem 2.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.hero__content {
+    max-width: 700px;
+}
+
+.badge {
+    display: inline-block;
+    background-color: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+
+.hero h1 {
+    font-size: 2.3rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    color: #cbd5e1;
+    font-size: 1.05rem;
+    margin-bottom: 1.75rem;
+}
+
+.hero__buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.producto-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: transform 0.2s ease;
+}
+
+.producto-card:hover {
+    transform: translateY(-4px);
+}
+
+.producto-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.tag {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent);
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.lista-beneficios {
+    list-style-position: inside;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+/* ==========================================================================
+   7. FORMULARIOS, BOTONES E INPUTS
+   ========================================================================== */
+.auth-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 520px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+}
+
+.form__row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.form__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form__group label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form__group input,
+.select-input {
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-surface-alt);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+}
+
+.form__group input:focus,
+.select-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+.help-text {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.btn {
+    padding: 0.75rem 1.4rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.btn--primary {
+    background-color: var(--color-primary);
+    color: #ffffff;
+}
+
+.btn--primary:hover {
+    background-color: var(--color-primary-hover);
+}
+
+.btn--outline {
+    background-color: transparent;
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+}
+
+.btn--outline:hover {
+    background-color: var(--color-accent-soft);
+}
+
+.btn--block {
+    width: 100%;
+}
+
+/* Indicador de intentos de login */
+.intentos-box {
+    background-color: var(--bg-surface-alt);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+}
+
+.estado-cuenta {
+    font-weight: 700;
+    color: var(--color-success);
+}
+
+/* ==========================================================================
+   8. PANEL DEL CAJERO (LAYOUT Y SUBPANELES)
+   ========================================================================== */
+.cajero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.cajero-top__selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 260px;
+}
+
+.cajero-top__selector label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.cajero-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.cajero-menu__title {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.cajero-menu__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.btn-menu {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background-color: var(--bg-surface-alt);
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-menu:hover,
+.btn-menu.active {
+    background-color: var(--color-primary);
+    color: #ffffff;
+}
+
+.btn-menu--danger {
+    margin-top: 1rem;
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+    background-color: transparent;
+}
+
+.btn-menu--danger:hover {
+    background-color: var(--color-danger);
+    color: #ffffff;
+}
+
+/* Visor de Saldo */
+.saldo-display {
+    background-color: var(--bg-surface-alt);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.saldo-display__label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.saldo-display__monto {
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: var(--color-accent);
+    margin-top: 0.25rem;
+}
+
+.saldo-detalles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.detalle-item {
+    background-color: var(--bg-surface-alt);
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--color-primary);
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+}
+
+.info-operacion {
+    background-color: var(--color-accent-soft);
+    border: 1px solid var(--color-accent);
+    padding: 0.9rem 1rem;
+    border-radius: 6px;
+}
+
+.perfil-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+/* ==========================================================================
+   9. TABLAS (MOVIMIENTOS Y CRUD DE USUARIOS)
+   ========================================================================== */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.table th,
+.table td {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table th {
+    background-color: var(--bg-surface-alt);
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.crud-form {
+    background-color: var(--bg-surface-alt);
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.form__actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* ==========================================================================
+   10. FOOTER CORPORATIVO
+   ========================================================================== */
+.footer {
+    background-color: var(--bg-navbar);
+    color: #94a3b8;
+    padding: 1.5rem 1rem;
+    margin-top: auto;
+    font-size: 0.85rem;
+}
+
+.footer__container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.footer__info strong {
+    color: #ffffff;
+    display: block;
+}
+
+.footer__socials {
+    display: flex;
+    gap: 1.25rem;
+}
+
+.footer__socials a {
+    color: #cbd5e1;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer__socials a:hover {
+    color: #38bdf8;
+}
+
+/* ==========================================================================
+   11. DISEÑO RESPONSIVO (TABLET Y MÓVIL)
+   ========================================================================== */
+@media (max-width: 900px) {
+    .productos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cajero-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .cajero-menu__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+
+    .btn-menu--danger {
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .navbar {
+        padding: 0.85rem 1rem;
+    }
+
+    .hero {
+        padding: 2rem 1.25rem;
+    }
+
+    .hero h1 {
+        font-size: 1.65rem;
+    }
+
+    .productos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        padding: 1.25rem;
+    }
+
+    .saldo-display__monto {
+        font-size: 1.9rem;
+    }
+}

@@ -1,12 +1,493 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Banco Mi Plata</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Mi Plata | Financial Bank</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    
+
+    <!-- ================= HEADER / NAVBAR ================= -->
+    <header class="navbar">
+        <div class="navbar__brand">
+            <div class="logo-hexagon">MP</div>
+            <div>
+                <span class="brand-title">MI PLATA</span>
+                <span class="brand-subtitle">FINANCIAL BANK</span>
+            </div>
+        </div>
+
+        <nav class="navbar__menu" id="nav-menu">
+            <button type="button" class="nav-link active" id="btn-nav-inicio">Inicio</button>
+            <button type="button" class="nav-link" id="btn-nav-login">Iniciar Sesión</button>
+            <button type="button" class="nav-link" id="btn-nav-registro">Registrarse</button>
+            <button type="button" class="nav-link" id="btn-nav-crud">Admin Usuarios</button>
+        </nav>
+
+        <div class="navbar__actions">
+            <!-- Botón Cambio de Tema Claro / Oscuro -->
+            <button type="button" class="btn-theme" id="btn-toggle-theme" aria-label="Cambiar tema" title="Cambiar entre modo claro y oscuro">
+                <span id="theme-icon">🌙</span>
+                <span id="theme-text">Oscuro</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ================= CONTENEDOR DE MENSAJES (ALERTAS) ================= -->
+    <!-- Clases adicionales para JS: .alerta--exito, .alerta--error, .alerta--advertencia -->
+    <div id="mensaje-feedback" class="alerta oculto" role="alert">
+        <span id="mensaje-texto">Mensaje del sistema</span>
+        <button type="button" id="btn-cerrar-alerta" class="alerta__cerrar">&times;</button>
+    </div>
+
+    <!-- ================= CONTENIDO PRINCIPAL ================= -->
+    <main class="main-container">
+
+        <!-- 1. VISTA: LANDING PAGE (PÁGINA DE INICIO) -->
+        <section id="vista-inicio" class="vista">
+            <div class="hero">
+                <div class="hero__content">
+                    <span class="badge">Banca Digital Segura</span>
+                    <h1>Gestiona tu futuro financiero con solidez y respaldo</h1>
+                    <p>En <strong>Mi Plata Financial Bank</strong> combinamos seguridad de grado bancario con productos diseñados a la medida de tus metas de ahorro, liquidez diaria y financiación.</p>
+                    <div class="hero__buttons">
+                        <button type="button" class="btn btn--primary" id="btn-hero-registro">Abrir una cuenta</button>
+                        <button type="button" class="btn btn--outline" id="btn-hero-login">Sucursal Virtual</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="productos-grid">
+                <article class="card producto-card">
+                    <div class="producto-card__header">
+                        <h3>Cuenta de Ahorros</h3>
+                        <span class="tag">1.5% E.M.</span>
+                    </div>
+                    <p>Diseñada para guardar tu dinero a mediano y largo plazo con generación de rendimientos seguros.</p>
+                    <ul class="lista-beneficios">
+                        <li>Consignación y retiro disponible.</li>
+                        <li>Interés del 1.5% mensual aplicado en el retiro.</li>
+                        <li>Control total sin riesgo de sobregiro.</li>
+                    </ul>
+                </article>
+
+                <article class="card producto-card">
+                    <div class="producto-card__header">
+                        <h3>Cuenta Corriente</h3>
+                        <span class="tag">Sobregiro 20%</span>
+                    </div>
+                    <p>Orientada a la gestión diaria de tu liquidez, recepción de nómina, pago de facturas y transferencias.</p>
+                    <ul class="lista-beneficios">
+                        <li>Mayor flexibilidad operativa.</li>
+                        <li>Cupo de sobregiro de hasta el 20% adicional sobre tu saldo.</li>
+                        <li>Sin cobro ni generación de intereses.</li>
+                    </ul>
+                </article>
+
+                <article class="card producto-card">
+                    <div class="producto-card__header">
+                        <h3>Tarjeta Ultra Plata Platinum</h3>
+                        <span class="tag">0% a 2 cuotas</span>
+                    </div>
+                    <p>Medio de pago con cupo preaprobado para financiar tus compras a cuotas con tasas preferenciales.</p>
+                    <ul class="lista-beneficios">
+                        <li>1 a 2 cuotas: <strong>0% de interés</strong>.</li>
+                        <li>3 a 6 cuotas: <strong>1.9% mensual</strong>.</li>
+                        <li>7 o más cuotas: <strong>2.3% mensual</strong>.</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <!-- 2. VISTA: REGISTRO DE NUEVOS CLIENTES -->
+        <section id="vista-registro" class="vista oculto">
+            <div class="auth-wrapper">
+                <div class="card auth-card">
+                    <div class="card__header">
+                        <h2>Registro de Nuevo Cliente</h2>
+                        <p>Completa tus datos para activar tus productos bancarios.</p>
+                    </div>
+                    <form id="form-registro" class="form">
+                        <div class="form__group">
+                            <label for="reg-id">Número de Identificación (Cédula o Pasaporte)</label>
+                            <input type="text" id="reg-id" placeholder="Ej. 1020304050" required>
+                        </div>
+                        <div class="form__group">
+                            <label for="reg-nombre">Nombre Completo</label>
+                            <input type="text" id="reg-nombre" placeholder="Ej. Juan Pérez" required>
+                        </div>
+                        <div class="form__row">
+                            <div class="form__group">
+                                <label for="reg-celular">Número de Celular</label>
+                                <input type="tel" id="reg-celular" placeholder="Ej. 3001234567" required>
+                            </div>
+                            <div class="form__group">
+                                <label for="reg-usuario">Usuario (Único)</label>
+                                <input type="text" id="reg-usuario" placeholder="Ej. jperez" required>
+                            </div>
+                        </div>
+                        <div class="form__row">
+                            <div class="form__group">
+                                <label for="reg-pass">Contraseña</label>
+                                <input type="password" id="reg-pass" placeholder="••••••••" required>
+                            </div>
+                            <div class="form__group">
+                                <label for="reg-pass-confirm">Confirmar Contraseña</label>
+                                <input type="password" id="reg-pass-confirm" placeholder="••••••••" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn--primary btn--block">Completar Registro</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. VISTA: INICIO DE SESIÓN -->
+        <section id="vista-login" class="vista oculto">
+            <div class="auth-wrapper">
+                <div class="card auth-card">
+                    <div class="card__header">
+                        <h2>Sucursal Virtual Personas</h2>
+                        <p>Ingresa tus credenciales para acceder al cajero.</p>
+                    </div>
+
+                    <!-- Indicador de intentos de seguridad -->
+                    <div class="intentos-box" id="contenedor-intentos">
+                        <span>Intentos fallidos: <strong id="contador-intentos">0</strong> / 3</span>
+                        <span class="estado-cuenta" id="estado-bloqueo">Cuenta Activa</span>
+                    </div>
+
+                    <form id="form-login" class="form">
+                        <div class="form__group">
+                            <label for="login-usuario">Nombre de Usuario</label>
+                            <input type="text" id="login-usuario" placeholder="Ingresa tu usuario" required>
+                        </div>
+                        <div class="form__group">
+                            <label for="login-pass">Contraseña</label>
+                            <input type="password" id="login-pass" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" id="btn-submit-login" class="btn btn--primary btn--block">Ingresar al Cajero</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. VISTA: ADMINISTRACIÓN DE USUARIOS (CRUD) -->
+        <section id="vista-crud" class="vista oculto">
+            <div class="card">
+                <div class="card__header flex-between">
+                    <div>
+                        <h2>Administración de Clientes (CRUD)</h2>
+                        <p>Gestión de registros del sistema bancario.</p>
+                    </div>
+                    <button type="button" class="btn btn--primary" id="btn-crud-nuevo">+ Nuevo Usuario</button>
+                </div>
+
+                <!-- Formulario de edición rápida para el CRUD -->
+                <form id="form-crud-editar" class="form crud-form oculto">
+                    <h3 id="titulo-form-crud">Editar Cliente</h3>
+                    <div class="form__row">
+                        <div class="form__group">
+                            <label for="crud-id">Identificación</label>
+                            <input type="text" id="crud-id" readonly>
+                        </div>
+                        <div class="form__group">
+                            <label for="crud-nombre">Nombre Completo</label>
+                            <input type="text" id="crud-nombre" required>
+                        </div>
+                        <div class="form__group">
+                            <label for="crud-celular">Celular</label>
+                            <input type="tel" id="crud-celular" required>
+                        </div>
+                        <div class="form__group">
+                            <label for="crud-usuario">Usuario</label>
+                            <input type="text" id="crud-usuario" required>
+                        </div>
+                    </div>
+                    <div class="form__actions">
+                        <button type="submit" class="btn btn--primary">Guardar Cambios</button>
+                        <button type="button" class="btn btn--outline" id="btn-crud-cancelar">Cancelar</button>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Identificación</th>
+                                <th>Nombre Completo</th>
+                                <th>Celular</th>
+                                <th>Usuario</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-usuarios-body">
+                            <!-- Filas inyectadas desde JavaScript -->
+                            <tr>
+                                <td colspan="6" class="text-center">No hay clientes registrados en el sistema.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. VISTA: PANEL DE TRANSACCIONES (CAJERO) -->
+        <section id="vista-cajero" class="vista oculto">
+            <!-- Encabezado de bienvenida y selector de producto -->
+            <div class="cajero-top card">
+                <div class="cajero-top__user">
+                    <span class="text-muted">Bienvenido(a),</span>
+                    <h2 id="cajero-nombre-cliente">Nombre del Cliente</h2>
+                    <small id="cajero-id-cliente">ID: 000000000</small>
+                </div>
+
+                <div class="cajero-top__selector">
+                    <label for="select-producto-activo">Producto Bancario Activo:</label>
+                    <select id="select-producto-activo" class="select-input">
+                        <option value="ahorros">Cuenta de Ahorros</option>
+                        <option value="corriente">Cuenta Corriente</option>
+                        <option value="credito">Tarjeta de Crédito Ultra Plata</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="cajero-layout">
+                <!-- Menú Lateral de Operaciones -->
+                <aside class="cajero-menu card">
+                    <h3 class="cajero-menu__title">Operaciones</h3>
+                    <div class="cajero-menu__grid">
+                        <button type="button" class="btn-menu active" data-panel="panel-saldo">Consultar Saldo</button>
+                        <button type="button" class="btn-menu" data-panel="panel-consignar">Consignar Dinero</button>
+                        <button type="button" class="btn-menu" data-panel="panel-retirar">Retirar / Avance</button>
+                        <button type="button" class="btn-menu" data-panel="panel-transferir">Transferir</button>
+                        <button type="button" class="btn-menu" data-panel="panel-movimientos">Ver Movimientos</button>
+                        <button type="button" class="btn-menu" data-panel="panel-perfil">Perfil y Seguridad</button>
+                        <button type="button" class="btn-menu btn-menu--danger" id="btn-cerrar-sesion">Cerrar Sesión</button>
+                    </div>
+                </aside>
+
+                <!-- Área Dinámica de Trabajo del Cajero -->
+                <div class="cajero-workspace">
+
+                    <!-- SUBPANEL 5.1: CONSULTAR SALDO -->
+                    <div id="panel-saldo" class="subpanel card">
+                        <div class="card__header">
+                            <h3 id="saldo-tipo-cuenta">Resumen de Cuenta de Ahorros</h3>
+                            <p id="saldo-numero-cuenta">N.° de Producto: 000-000000-01</p>
+                        </div>
+                        <div class="saldo-display">
+                            <span class="saldo-display__label">Saldo Disponible / Cupo</span>
+                            <p class="saldo-display__monto" id="visor-saldo-principal">$ 0.00</p>
+                        </div>
+                        <div class="saldo-detalles" id="detalles-adicionales-cuenta">
+                            <div class="detalle-item">
+                                <span>Regla del Producto:</span>
+                                <strong id="regla-producto-texto">Rendimiento del 1.5% mensual al retirar</strong>
+                            </div>
+                            <div class="detalle-item">
+                                <span>Límite disponible / Deuda actual:</span>
+                                <strong id="visor-info-secundaria">$ 0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUBPANEL 5.2: CONSIGNAR DINERO -->
+                    <div id="panel-consignar" class="subpanel card oculto">
+                        <div class="card__header">
+                            <h3>Consignar Dinero / Abonar</h3>
+                            <p>Ingresa un monto positivo mayor a cero para acreditar a tu producto seleccionado.</p>
+                        </div>
+                        <form id="form-consignar" class="form">
+                            <div class="form__group">
+                                <label for="input-monto-consignar">Monto a Consignar ($)</label>
+                                <input type="number" id="input-monto-consignar" min="1" step="any" placeholder="Ej. 500000" required>
+                            </div>
+                            <button type="submit" class="btn btn--primary">Realizar Consignación</button>
+                        </form>
+                    </div>
+
+                    <!-- SUBPANEL 5.3: RETIRAR DINERO / COMPRA CON TARJETA DE CRÉDITO -->
+                    <div id="panel-retirar" class="subpanel card oculto">
+                        <div class="card__header">
+                            <h3>Retirar Dinero / Usar Cupo de Crédito</h3>
+                            <p id="texto-regla-retiro">Se aplicarán las condiciones del producto bancario activo.</p>
+                        </div>
+                        <form id="form-retirar" class="form">
+                            <div class="form__group">
+                                <label for="input-monto-retirar">Monto de la Operación ($)</label>
+                                <input type="number" id="input-monto-retirar" min="1" step="any" placeholder="Ej. 200000" required>
+                            </div>
+
+                            <!-- Campo exclusivo para cuando esté seleccionada la Tarjeta de Crédito -->
+                            <div class="form__group oculto" id="grupo-cuotas-tc">
+                                <label for="input-cuotas-tc">Número de Cuotas (1 a 36)</label>
+                                <input type="number" id="input-cuotas-tc" min="1" max="36" value="1">
+                                <small class="help-text">≤ 2 cuotas: 0% | 3-6 cuotas: 1.9% M.V. | ≥ 7 cuotas: 2.3% M.V.</small>
+                            </div>
+
+                            <!-- Resultado de simulación de cuota o interés aplicado -->
+                            <div id="resultado-operacion-retiro" class="info-operacion oculto">
+                                <p id="texto-resultado-retiro">Valor de cuota mensual estimada: <strong>$ 0.00</strong></p>
+                            </div>
+
+                            <button type="submit" class="btn btn--primary">Confirmar Operación</button>
+                        </form>
+                    </div>
+
+                    <!-- SUBPANEL 5.4: TRANSFERENCIAS -->
+                    <div id="panel-transferir" class="subpanel card oculto">
+                        <div class="card__header">
+                            <h3>Transferencias Bancarias</h3>
+                            <p>Transfiere entre tus propios productos o a cuentas de otros clientes del banco.</p>
+                        </div>
+                        <form id="form-transferir" class="form">
+                            <div class="form__group">
+                                <label for="select-tipo-transferencia">Tipo de Destino</label>
+                                <select id="select-tipo-transferencia" class="select-input">
+                                    <option value="propia">Entre mis productos bancarios</option>
+                                    <option value="terceros">A cuenta de otro usuario</option>
+                                </select>
+                            </div>
+
+                            <!-- Si es entre cuentas propias -->
+                            <div class="form__group" id="grupo-destino-propio">
+                                <label for="select-producto-destino">Producto de Destino</label>
+                                <select id="select-producto-destino" class="select-input">
+                                    <option value="corriente">Cuenta Corriente</option>
+                                    <option value="ahorros">Cuenta de Ahorros</option>
+                                    <option value="credito">Tarjeta de Crédito (Pago de deuda)</option>
+                                </select>
+                            </div>
+
+                            <!-- Si es a cuenta de otro usuario -->
+                            <div class="form__row oculto" id="grupo-destino-tercero">
+                                <div class="form__group">
+                                    <label for="input-usuario-destino">Usuario o ID del Destinatario</label>
+                                    <input type="text" id="input-usuario-destino" placeholder="Ej. maria_g">
+                                </div>
+                                <div class="form__group">
+                                    <label for="select-tipo-cuenta-tercero">Tipo de Producto del Destinatario</label>
+                                    <select id="select-tipo-cuenta-tercero" class="select-input">
+                                        <option value="ahorros">Cuenta de Ahorros</option>
+                                        <option value="corriente">Cuenta Corriente</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form__group">
+                                <label for="input-monto-transferir">Monto a Transferir ($)</label>
+                                <input type="number" id="input-monto-transferir" min="1" step="any" placeholder="Ej. 150000" required>
+                            </div>
+
+                            <button type="submit" class="btn btn--primary">Ejecutar Transferencia</button>
+                        </form>
+                    </div>
+
+                    <!-- SUBPANEL 5.5: HISTORIAL DE MOVIMIENTOS -->
+                    <div id="panel-movimientos" class="subpanel card oculto">
+                        <div class="card__header">
+                            <h3>Historial de Movimientos</h3>
+                            <p>Registro cronológico (orden descendente) del producto activo.</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha y Hora</th>
+                                        <th>Tipo de Transacción</th>
+                                        <th>Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-movimientos-body">
+                                    <tr>
+                                        <td colspan="3" class="text-center">Aún no se registran movimientos en este producto.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SUBPANEL 5.6: PERFIL Y SEGURIDAD -->
+                    <div id="panel-perfil" class="subpanel card oculto">
+                        <div class="perfil-grid">
+                            <!-- Editar datos básicos -->
+                            <div>
+                                <div class="card__header">
+                                    <h3>Datos de Perfil</h3>
+                                    <p>Actualiza tu información personal registrada.</p>
+                                </div>
+                                <form id="form-editar-perfil" class="form">
+                                    <div class="form__group">
+                                        <label for="perfil-id">Identificación</label>
+                                        <input type="text" id="perfil-id" required>
+                                    </div>
+                                    <div class="form__group">
+                                        <label for="perfil-nombre">Nombre Completo</label>
+                                        <input type="text" id="perfil-nombre" required>
+                                    </div>
+                                    <div class="form__group">
+                                        <label for="perfil-celular">Número de Celular</label>
+                                        <input type="tel" id="perfil-celular" required>
+                                    </div>
+                                    <button type="submit" class="btn btn--primary">Guardar Datos</button>
+                                </form>
+                            </div>
+
+                            <!-- Cambiar contraseña -->
+                            <div>
+                                <div class="card__header">
+                                    <h3>Cambio de Contraseña</h3>
+                                    <p>Valida tus credenciales actuales para actualizar tu clave.</p>
+                                </div>
+                                <form id="form-cambiar-pass" class="form">
+                                    <div class="form__group">
+                                        <label for="pass-usuario">Confirma tu Usuario</label>
+                                        <input type="text" id="pass-usuario" required>
+                                    </div>
+                                    <div class="form__group">
+                                        <label for="pass-actual">Contraseña Actual</label>
+                                        <input type="password" id="pass-actual" required>
+                                    </div>
+                                    <div class="form__group">
+                                        <label for="pass-nueva">Nueva Contraseña</label>
+                                        <input type="password" id="pass-nueva" required>
+                                    </div>
+                                    <div class="form__group">
+                                        <label for="pass-confirmar">Confirmar Nueva Contraseña</label>
+                                        <input type="password" id="pass-confirmar" required>
+                                    </div>
+                                    <button type="submit" class="btn btn--outline">Actualizar Contraseña</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= FOOTER CORPORATIVO ================= -->
+    <footer class="footer">
+        <div class="footer__container">
+            <div class="footer__info">
+                <strong>MI PLATA FINANCIAL BANK</strong>
+                <p>Vigilado Superintendencia Financiera | Proyecto Académico Desarrollo de Software - CESDE</p>
+            </div>
+            <div class="footer__socials">
+                <a href="#" aria-label="LinkedIn">LinkedIn</a>
+                <a href="#" aria-label="X / Twitter">X</a>
+                <a href="#" aria-label="Instagram">Instagram</a>
+                <a href="#" aria-label="Soporte">Línea Ética</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Enlace para tu futuro archivo JavaScript -->
+    <script src="app.js"></script>
 </body>
 </html>
