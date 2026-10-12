@@ -46,6 +46,8 @@ document.getElementById('btn-submit-login').addEventListener('click',()=>{
     cambiarVista('vista-cajero','btn-nav-login')
 })
 
+document.getElementById('')
+
 //Función para cambiar el modo claro u oscuro
 const btnToggleTheme = document.getElementById('btn-toggle-theme');
 const themeIcon = document.getElementById('theme-icon');
@@ -76,3 +78,46 @@ btnToggleTheme.addEventListener('click', () => {
         localStorage.setItem('temaBancario', 'light'); // Guarda en memoria
     }
 });
+
+
+// 1. Capturar todos los botones del menú del cajero y los subpaneles
+const botonesCajero = document.querySelectorAll('.cajero-menu .btn-menu');
+const subpaneles = document.querySelectorAll('.subpanel');
+
+// 2. Recorrer cada botón para asignarle el evento clic
+botonesCajero.forEach(boton => {
+    boton.addEventListener('click', function() {
+        
+        // Excepción: Si el botón presionado es el de cerrar sesión, no buscamos paneles
+        if (this.id === 'btn-cerrar-sesion') {
+            // Aquí luego pondrás tu lógica para cerrar sesión
+            cambiarVista('vista-inicio', 'btn-nav-inicio'); 
+            return; 
+        }
+
+        // A. Ocultar todos los subpaneles agregando la clase 'oculto'
+        subpaneles.forEach(panel => {
+            panel.classList.add('oculto');
+        });
+
+        // B. Quitar la clase 'active' de todos los botones del menú lateral
+        botonesCajero.forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        // C. Marcar como activo el botón que se acaba de presionar
+        this.classList.add('active');
+
+        // D. Leer a qué panel quiere ir este botón (ej. "panel-consignar")
+        const idPanelDestino = this.getAttribute('data-panel');
+
+        // E. Mostrar el panel destino quitándole la clase 'oculto'
+        if (idPanelDestino) {
+            document.getElementById(idPanelDestino).classList.remove('oculto');
+        }
+    });
+});
+
+document.getElementById('btn-cerrar-sesion').addEventListener('Click',()=>{
+      cambiarVista('vista-inicio','btn-nav-inicio')  
+    })
