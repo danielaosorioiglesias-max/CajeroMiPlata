@@ -34,10 +34,10 @@ export class Usuario {
 
         this.#identificacion = identificacionLimpia
 
-        this.nombres = nombres
-        this.apellidos = apellidos
-        this.celular = celular
-        this.usuario = usuario
+        this.#nombres = nombres
+        this.#apellidos = apellidos
+        this.#celular = celular
+        this.#usuario = usuario
     }
 
     get id() {
