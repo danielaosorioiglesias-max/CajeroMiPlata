@@ -1,6 +1,6 @@
 
 import { Usuario } from "./src/Usuario.js"
-import { registrarUsuario } from "./registro.js"
+import { registrarUsuario } from "./registro.js"         
 
 const formulario = document.getElementById("form-registro")
 const mensajeFeedback = document.getElementById("mensaje-feedback")
