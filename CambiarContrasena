@@ -23,3 +23,15 @@ function validarNuevaContrasena(contrasena) {
 
     return true
 }
+
+
+function confirmarNuevaContrasena(contrasena, confirmacion) {
+
+    validarNuevaContrasena(contrasena)
+
+    if (contrasena !== confirmacion) {
+        throw new Error("Las contraseñas no coinciden.")
+    }
+
+    return true
+}
