@@ -484,3 +484,261 @@ function transferirEntreUsuarios(
 
     return true
 }
+
+
+function transferirEntreProductos(numeroOrigen, numeroDestino, monto) {
+    const usuario = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuario) {
+        throw new Error("Debes iniciar sesión.")
+    }
+
+    const cuentas = cargarCuentas()
+
+    const origen = cuentas.find(
+        cuenta =>
+            cuenta.numeroCuenta === numeroOrigen &&
+            cuenta.titularId === usuario.id
+    )
+
+    const destino = cuentas.find(
+        cuenta =>
+            cuenta.numeroCuenta === numeroDestino &&
+            cuenta.titularId === usuario.id
+    )
+
+    if (!origen || !destino) {
+        throw new Error("Las cuentas deben pertenecer al mismo usuario.")
+    }
+
+    Transaccion.transferir(origen, destino, monto)
+
+    guardarCuentas(cuentas)
+    registrarMovimientos(origen, destino, monto)
+
+    return true
+}
+
+function mostrarMensaje(texto, tipo = "exito") {
+    const alerta = document.getElementById("mensaje-feedback")
+    const mensaje = document.getElementById("mensaje-texto")
+
+    mensaje.textContent = texto
+    alerta.className = `alerta alerta--${tipo}`
+}
+
+function mostrarVista(idVista) {
+    document.querySelectorAll(".vista").forEach(
+        vista => vista.classList.add("oculto")
+    )
+
+    document.getElementById(idVista).classList.remove("oculto")
+}
+
+function mostrarMovimientos() {
+    const usuario = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuario) {
+        return
+    }
+
+    const numeroCuenta = document.getElementById(
+        "select-producto-activo"
+    ).value
+
+    const cuentas = cargarCuentas()
+
+    const cuenta = cuentas.find(
+        cuenta =>
+            cuenta.numeroCuenta === numeroCuenta &&
+            cuenta.titularId === usuario.id
+    )
+
+    if (!cuenta) {
+        return
+    }
+
+    const movimientos = cargarDatos(MOVIMIENTOS, [])
+        .filter(movimiento => movimiento.numeroCuenta === numeroCuenta)
+        .reverse()
+
+    const tabla = document.getElementById("tabla-movimientos-body")
+
+    tabla.replaceChildren()
+
+    if (movimientos.length === 0) {
+        const fila = document.createElement("tr")
+        const celda = document.createElement("td")
+
+        celda.colSpan = 3
+        celda.textContent = "Aún no se registran movimientos."
+        fila.appendChild(celda)
+        tabla.appendChild(fila)
+
+        return
+    }
+
+    movimientos.forEach(movimiento => {
+        const fila = document.createElement("tr")
+
+        const fecha = document.createElement("td")
+        const tipo = document.createElement("td")
+        const valor = document.createElement("td")
+
+        fecha.textContent = new Date(movimiento.fecha).toLocaleString("es-CO")
+        tipo.textContent = movimiento.tipo
+        valor.textContent = movimiento.valor.toLocaleString("es-CO", {
+            style: "currency",
+            currency: "COP"
+        })
+
+        fila.append(fecha, tipo, valor)
+        tabla.appendChild(fila)
+    })
+}
+
+function actualizarCajero() {
+    const usuario = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuario) {
+        return
+    }
+
+    mostrarProductos(usuario)
+    mostrarMovimientos()
+}
+
+document.getElementById("btn-nav-login")?.addEventListener("click", () => {
+    mostrarVista("vista-login")
+})
+
+document.getElementById("btn-hero-login")?.addEventListener("click", () => {
+    mostrarVista("vista-login")
+})
+
+document.getElementById("form-login")?.addEventListener("submit", async function(evento) {
+    evento.preventDefault()
+
+    const usuario = document.getElementById("login-usuario").value
+    const contrasena = document.getElementById("login-pass").value
+
+    try {
+        await Autenticacion.iniciarSesion(usuario, contrasena)
+
+        mostrarVista("vista-cajero")
+        actualizarCajero()
+
+        mostrarMensaje("Inicio de sesión exitoso.")
+        this.reset()
+
+    } catch (error) {
+        mostrarMensaje(error.message, "error")
+    }
+})
+
+document.getElementById("select-producto-activo")?.addEventListener("change", () => {
+    mostrarSaldoActivo()
+    mostrarMovimientos()
+})
+
+document.getElementById("select-tipo-transferencia")?.addEventListener("change", function() {
+    const esPropia = this.value === "propia"
+
+    document.getElementById("grupo-destino-propio")
+        .classList.toggle("oculto", !esPropia)
+
+    document.getElementById("grupo-destino-tercero")
+        .classList.toggle("oculto", esPropia)
+})
+
+document.getElementById("form-transferir")?.addEventListener("submit", function(evento) {
+    evento.preventDefault()
+
+    const numeroOrigen = document.getElementById("select-producto-activo").value
+    const tipo = document.getElementById("select-tipo-transferencia").value
+    const monto = Number(document.getElementById("input-monto-transferir").value)
+
+    try {
+        if (tipo === "propia") {
+            const destino = document.getElementById("select-producto-destino").value
+
+            transferirEntreProductos(numeroOrigen, destino, monto)
+
+        } else {
+            const usuarioDestino = document.getElementById("input-usuario-destino").value
+            const tipoCuenta = document.getElementById("select-tipo-cuenta-tercero").value
+
+            transferirEntreUsuarios(
+                numeroOrigen,
+                usuarioDestino,
+                tipoCuenta,
+                monto
+            )
+        }
+
+        mostrarMensaje("Transferencia realizada correctamente.")
+        actualizarCajero()
+        this.reset()
+
+    } catch (error) {
+        mostrarMensaje(error.message, "error")
+    }
+})
+
+document.getElementById("form-consignar")?.addEventListener("submit", function(evento) {
+    evento.preventDefault()
+
+    const usuario = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuario) {
+        mostrarMensaje("Debes iniciar sesión.", "error")
+        return
+    }
+
+    const numeroCuenta = document.getElementById("select-producto-activo").value
+    const monto = Number(document.getElementById("input-monto-consignar").value)
+
+    try {
+        const cuentas = cargarCuentas()
+
+        const cuenta = cuentas.find(
+            cuenta =>
+                cuenta.numeroCuenta === numeroCuenta &&
+                cuenta.titularId === usuario.id
+        )
+
+        if (!cuenta || cuenta.tipo === "credito") {
+            throw new Error("Selecciona una cuenta válida.")
+        }
+
+        cuenta.consignar(monto)
+
+        guardarCuentas(cuentas)
+
+        const movimientos = cargarDatos(MOVIMIENTOS, [])
+
+        movimientos.push(
+            new Movimiento(
+                cuenta.numeroCuenta,
+                "Consignación de prueba",
+                monto,
+                "Consignación simulada"
+            )
+        )
+
+        guardarDatos(MOVIMIENTOS, movimientos)
+
+        mostrarMensaje("Consignación de prueba realizada.")
+        actualizarCajero()
+        this.reset()
+
+    } catch (error) {
+        mostrarMensaje(error.message, "error")
+    }
+})
+
+document.getElementById("btn-cerrar-sesion")?.addEventListener("click", () => {
+    Autenticacion.cerrarSesion()
+    mostrarVista("vista-inicio")
+    mostrarMensaje("Sesión cerrada correctamente.")
+})
