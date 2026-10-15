@@ -366,3 +366,121 @@ function mostrarSaldoActivo() {
     document.getElementById("saldo-tipo-cuenta").textContent =
         `Resumen de ${cuenta.tipo}`
 }
+
+
+class Movimiento {
+
+    constructor(numeroCuenta, tipo, valor, descripcion) {
+        this.id = crypto.randomUUID()
+        this.numeroCuenta = numeroCuenta
+        this.fecha = new Date().toISOString()
+        this.tipo = tipo
+        this.valor = valor
+        this.descripcion = descripcion
+    }
+}
+
+class Transaccion {
+
+    static transferir(origen, destino, monto) {
+        if (!Number.isFinite(monto) || monto <= 0) {
+            throw new Error("El monto debe ser mayor a cero.")
+        }
+
+        if (origen.numeroCuenta === destino.numeroCuenta) {
+            throw new Error("Las cuentas deben ser diferentes.")
+        }
+
+        if (
+            origen.tipo === "credito" ||
+            destino.tipo === "credito"
+        ) {
+            throw new Error("No se permiten transferencias con tarjetas de crédito.")
+        }
+
+        if (origen.saldo < monto) {
+            throw new Error("Saldo insuficiente.")
+        }
+
+        origen.retirar(monto)
+        destino.consignar(monto)
+    }
+}
+
+function registrarMovimientos(origen, destino, monto) {
+    const movimientos = cargarDatos(MOVIMIENTOS, [])
+
+    movimientos.push(
+        new Movimiento(
+            origen.numeroCuenta,
+            "Transferencia enviada",
+            -monto,
+            `Destino: ${destino.numeroCuenta}`
+        )
+    )
+
+    movimientos.push(
+        new Movimiento(
+            destino.numeroCuenta,
+            "Transferencia recibida",
+            monto,
+            `Origen: ${origen.numeroCuenta}`
+        )
+    )
+
+    guardarDatos(MOVIMIENTOS, movimientos)
+}
+
+function transferirEntreUsuarios(
+    numeroOrigen,
+    nombreDestinatario,
+    tipoDestino,
+    monto
+) {
+    const usuarioActivo = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuarioActivo) {
+        throw new Error("Debes iniciar sesión.")
+    }
+
+    const destinatario = Autenticacion.buscarUsuario(nombreDestinatario)
+
+    if (!destinatario) {
+        throw new Error("El usuario destinatario no existe.")
+    }
+
+    if (destinatario.id === usuarioActivo.id) {
+        throw new Error("Utiliza una transferencia entre productos propios.")
+    }
+
+    obtenerProductos(destinatario)
+
+    const cuentas = cargarCuentas()
+
+    const origen = cuentas.find(
+        cuenta =>
+            cuenta.numeroCuenta === numeroOrigen &&
+            cuenta.titularId === usuarioActivo.id
+    )
+
+    const destino = cuentas.find(
+        cuenta =>
+            cuenta.titularId === destinatario.id &&
+            cuenta.tipo === tipoDestino
+    )
+
+    if (!origen) {
+        throw new Error("La cuenta de origen no pertenece al usuario.")
+    }
+
+    if (!destino) {
+        throw new Error("El destinatario no tiene ese producto.")
+    }
+
+    Transaccion.transferir(origen, destino, monto)
+
+    guardarCuentas(cuentas)
+    registrarMovimientos(origen, destino, monto)
+
+    return true
+}
