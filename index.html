@@ -372,7 +372,7 @@
                             <!-- Si es a cuenta de otro usuario -->
                             <div class="form__row oculto" id="grupo-destino-tercero">
                                 <div class="form__group">
-                                    <label for="input-usuario-destino">Usuario o ID del Destinatario</label>
+                                    <label for="input-usuario-destino">Usuario o identificación del destinatario</label>
                                     <input type="text" id="input-usuario-destino" placeholder="Ej. maria_g">
                                 </div>
                                 <div class="form__group">
@@ -380,6 +380,7 @@
                                     <select id="select-tipo-cuenta-tercero" class="select-input">
                                         <option value="ahorros">Cuenta de Ahorros</option>
                                         <option value="corriente">Cuenta Corriente</option>
+                                        <option value="credito">Tarjeta de Crédito (abono)</option>
                                     </select>
                                 </div>
                             </div>
@@ -496,6 +497,21 @@
 
     <!-- Navegación general (script clásico) -->
     <script src="src/Main.js"></script>
+    <!-- Modelo bancario (POO): el orden importa, cada clase usa las anteriores -->
+    <script src="src/Utilidades.js"></script>
+    <script src="src/Movimiento.js"></script>
+    <script src="src/Cuenta.js"></script>
+    <script src="src/CuentaAhorros.js"></script>
+    <script src="src/CuentaCorriente.js"></script>
+    <script src="src/TarjetaCredito.js"></script>
+    <script src="src/Banco.js"></script>
+    <!-- Panel del cajero y sus módulos -->
+    <script src="src/Cajero.js"></script>
+    <script src="src/Saldo.js"></script>
+    <script src="src/Consignar.js"></script>
+    <script src="src/Retirar.js"></script>
+    <script src="src/Transferir.js"></script>
+    <script src="src/Movimientos.js"></script>
     <!-- Módulos de autenticación -->
     <script type="module" src="./registro.js"></script>
     <script type="module" src="./Iniciosesion.js"></script>
