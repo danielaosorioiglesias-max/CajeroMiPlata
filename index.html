@@ -113,10 +113,19 @@
                             <label for="reg-id">Número de Identificación (Cédula o Pasaporte)</label>
                             <input type="text" id="reg-id" placeholder="Ej. 1020304050" required>
                         </div>
-                        <div class="form__group">
-                            <label for="reg-nombre">Nombre Completo</label>
-                            <input type="text" id="reg-nombre" placeholder="Ej. Juan Pérez" required>
-                        </div>
+ 
+        <div class="form__row">
+            <div class="form__group">
+                <label for="reg-nombres">Nombres</label>
+                <input type="text" id="reg-nombres" placeholder="Ej. Juan Fernando" required>
+        </div>
+
+        <div class="form__group">
+            <label for="reg-apellidos">Apellidos</label>
+                <input type="text" id="reg-apellidos" placeholder="Ej. Pérez Gómez" required>
+            </div>
+        </div>
+
                         <div class="form__row">
                             <div class="form__group">
                                 <label for="reg-celular">Número de Celular</label>
@@ -491,6 +500,7 @@
     <!-- Navegación general (script clásico) -->
     <script src="src/Main.js"></script>
     <!-- Módulos de autenticación -->
+    <script type="module" src="./main.js"></script>
     <script type="module" src="./Iniciosesion.js"></script>
     <script type="module" src="./CambiarContrasena.js"></script>
 </body>
