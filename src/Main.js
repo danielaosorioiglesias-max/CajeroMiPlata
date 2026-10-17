@@ -42,11 +42,12 @@ document.getElementById('btn-hero-login').addEventListener('click',()=>{
     cambiarVista('vista-login','btn-nav-login')
 })
 
-document.getElementById('btn-submit-login').addEventListener('click',()=>{
-    cambiarVista('vista-cajero','btn-nav-login')
-})
+// La vista del cajero la abre Iniciosesion.js solo cuando las credenciales son válidas
 
-document.getElementById('')
+// Botón para cerrar los mensajes de retroalimentación
+document.getElementById('btn-cerrar-alerta').addEventListener('click',()=>{
+    document.getElementById('mensaje-feedback').classList.add('oculto');
+})
 
 //Función para cambiar el modo claro u oscuro
 const btnToggleTheme = document.getElementById('btn-toggle-theme');
@@ -118,6 +119,3 @@ botonesCajero.forEach(boton => {
     });
 });
 
-document.getElementById('btn-cerrar-sesion').addEventListener('Click',()=>{
-      cambiarVista('vista-inicio','btn-nav-inicio')  
-    })

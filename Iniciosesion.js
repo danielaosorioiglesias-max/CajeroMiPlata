@@ -1,4 +1,3 @@
-
 import { Usuario } from "./src/Usuario.js"
 
 const USUARIOS = "usuariosBanco"
@@ -6,6 +5,8 @@ const CREDENCIALES = "credencialesBanco"
 const CUENTAS = "cuentasBanco"
 const MOVIMIENTOS = "movimientosBanco"
 const SESION = "sesionBanco"
+const INTENTOS = "intentosBanco"
+const MAX_INTENTOS = 3
 
 function cargarDatos(clave, valorInicial) {
     const datos = localStorage.getItem(clave)
@@ -52,6 +53,38 @@ class Autenticacion {
 
     static cerrarSesion() {
         sessionStorage.removeItem(SESION)
+    }
+
+    // Los intentos se cuentan por nombre de usuario (exista o no) para no revelar qué usuarios existen
+    static obtenerIntentos(nombreUsuario) {
+        const intentos = cargarDatos(INTENTOS, {})
+
+        return intentos[Autenticacion.normalizar(nombreUsuario)] ?? 0
+    }
+
+    static estaBloqueado(nombreUsuario) {
+        return Autenticacion.obtenerIntentos(nombreUsuario) >= MAX_INTENTOS
+    }
+
+    static registrarIntentoFallido(nombreUsuario) {
+        const intentos = cargarDatos(INTENTOS, {})
+        const clave = Autenticacion.normalizar(nombreUsuario)
+
+        intentos[clave] = (intentos[clave] ?? 0) + 1
+        guardarDatos(INTENTOS, intentos)
+
+        return intentos[clave]
+    }
+
+    static reiniciarIntentos(nombreUsuario) {
+        const intentos = cargarDatos(INTENTOS, {})
+
+        delete intentos[Autenticacion.normalizar(nombreUsuario)]
+        guardarDatos(INTENTOS, intentos)
+    }
+
+    static normalizar(nombreUsuario) {
+        return String(nombreUsuario ?? "").trim().toLowerCase()
     }
 }
 
@@ -115,18 +148,13 @@ export async function verificarContrasena(contrasena, credencial) {
 }
 
 Autenticacion.iniciarSesion = async function(nombreUsuario, contrasena) {
+    if (Autenticacion.estaBloqueado(nombreUsuario)) {
+        throw new Error("Cuenta bloqueada por superar 3 intentos fallidos. Comunícate con el administrador.")
+    }
+
     const usuario = Autenticacion.buscarUsuario(nombreUsuario)
-
-    if (!usuario) {
-        throw new Error("Usuario o contraseña incorrectos.")
-    }
-
     const credenciales = cargarDatos(CREDENCIALES, {})
-    const credencial = credenciales[usuario.id]
-
-    if (!credencial) {
-        throw new Error("Este usuario no tiene credenciales configuradas.")
-    }
+    const credencial = usuario ? credenciales[usuario.id] : null
 
     const esValida = await verificarContrasena(
         contrasena,
@@ -134,12 +162,32 @@ Autenticacion.iniciarSesion = async function(nombreUsuario, contrasena) {
     )
 
     if (!esValida) {
-        throw new Error("Usuario o contraseña incorrectos.")
+        const intentos = Autenticacion.registrarIntentoFallido(nombreUsuario)
+
+        if (intentos >= MAX_INTENTOS) {
+            throw new Error("Cuenta bloqueada por superar 3 intentos fallidos. Comunícate con el administrador.")
+        }
+
+        throw new Error(`Usuario o contraseña incorrectos. Te quedan ${MAX_INTENTOS - intentos} intento(s).`)
     }
 
+    Autenticacion.reiniciarIntentos(nombreUsuario)
     sessionStorage.setItem(SESION, usuario.id)
 
     return usuario
+}
+
+function mostrarIntentos(nombreUsuario) {
+    const intentos = Autenticacion.obtenerIntentos(nombreUsuario)
+    const bloqueado = intentos >= MAX_INTENTOS
+    const estado = document.getElementById("estado-bloqueo")
+
+    document.getElementById("contador-intentos").textContent = intentos
+
+    estado.textContent = bloqueado ? "Cuenta Bloqueada" : "Cuenta Activa"
+    estado.style.color = bloqueado ? "var(--color-danger)" : ""
+
+    document.getElementById("btn-submit-login").disabled = bloqueado
 }
 
 
@@ -363,8 +411,14 @@ function mostrarSaldoActivo() {
     document.getElementById("saldo-numero-cuenta").textContent =
         `Producto: ${cuenta.numeroCuenta}`
 
+    const nombresProductos = {
+        ahorros: "Cuenta de Ahorros",
+        corriente: "Cuenta Corriente",
+        credito: "Tarjeta de Crédito"
+    }
+
     document.getElementById("saldo-tipo-cuenta").textContent =
-        `Resumen de ${cuenta.tipo}`
+        `Resumen de ${nombresProductos[cuenta.tipo]}`
 }
 
 
@@ -608,12 +662,8 @@ function actualizarCajero() {
     mostrarMovimientos()
 }
 
-document.getElementById("btn-nav-login")?.addEventListener("click", () => {
-    mostrarVista("vista-login")
-})
-
-document.getElementById("btn-hero-login")?.addEventListener("click", () => {
-    mostrarVista("vista-login")
+document.getElementById("login-usuario")?.addEventListener("input", function() {
+    mostrarIntentos(this.value)
 })
 
 document.getElementById("form-login")?.addEventListener("submit", async function(evento) {
@@ -630,9 +680,11 @@ document.getElementById("form-login")?.addEventListener("submit", async function
 
         mostrarMensaje("Inicio de sesión exitoso.")
         this.reset()
+        mostrarIntentos("")
 
     } catch (error) {
         mostrarMensaje(error.message, "error")
+        mostrarIntentos(usuario)
     }
 })
 
@@ -720,15 +772,15 @@ document.getElementById("form-consignar")?.addEventListener("submit", function(e
         movimientos.push(
             new Movimiento(
                 cuenta.numeroCuenta,
-                "Consignación de prueba",
+                "Consignación",
                 monto,
-                "Consignación simulada"
+                "Depósito en cajero"
             )
         )
 
         guardarDatos(MOVIMIENTOS, movimientos)
 
-        mostrarMensaje("Consignación de prueba realizada.")
+        mostrarMensaje("Consignación realizada correctamente.")
         actualizarCajero()
         this.reset()
 

@@ -1,4 +1,3 @@
-
 import { Usuario } from "./src/Usuario.js"
 import { crearCredencial, verificarContrasena } from "./Iniciosesion.js"
 
@@ -6,28 +5,10 @@ const USUARIOS = "usuariosBanco"
 const CREDENCIALES = "credencialesBanco"
 const SESION = "sesionBanco"
 
-function validarNuevaContrasena(contrasena) {
-
-    Usuario.validarContrasena(contrasena)
-
-    const tieneMayuscula = /[A-Z]/.test(contrasena)
-    const tieneEspecial = /[^a-zA-Z0-9]/.test(contrasena)
-
-    if (!tieneMayuscula) {
-        throw new Error("La contraseña debe contener al menos una mayúscula.")
-    }
-
-    if (!tieneEspecial) {
-        throw new Error("La contraseña debe contener al menos un carácter especial.")
-    }
-
-    return true
-}
-
-
 function confirmarNuevaContrasena(contrasena, confirmacion) {
 
-    validarNuevaContrasena(contrasena)
+    // Longitud, mayúscula, minúscula y carácter especial (mismas reglas del registro)
+    Usuario.validarContrasena(contrasena)
 
     if (contrasena !== confirmacion) {
         throw new Error("Las contraseñas no coinciden.")

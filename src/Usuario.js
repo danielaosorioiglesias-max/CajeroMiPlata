@@ -1,4 +1,3 @@
-
 export class Usuario {
 
     #id
@@ -34,10 +33,11 @@ export class Usuario {
 
         this.#identificacion = identificacionLimpia
 
-        this.#nombres = nombres
-        this.#apellidos = apellidos
-        this.#celular = celular
-        this.#usuario = usuario
+        // Se usan los setters para que el constructor también valide y normalice
+        this.nombres = nombres
+        this.apellidos = apellidos
+        this.celular = celular
+        this.usuario = usuario
     }
 
     get id() {
@@ -88,7 +88,7 @@ export class Usuario {
         const celularLimpio = nuevoCelular.trim()
 
         if (!/^3\d{9}$/.test(celularLimpio)) {
-            throw new Error("Ingresa un celular válido de 10 dígitos")
+            throw new Error("Ingresa un celular válido de 10 dígitos que empiece por 3.")
         }
 
         this.#celular = celularLimpio
@@ -104,7 +104,7 @@ export class Usuario {
         const patron = /^[a-z][a-z0-9_]{3,19}$/
 
         if (!patron.test(usuarioLimpio)) {
-            throw new Error("Nombre de usuario inválido")
+            throw new Error("Usuario inválido: 4 a 20 caracteres, empieza por letra y solo admite letras, números y _.")
         }
 
         this.#usuario = usuarioLimpio
@@ -112,15 +112,27 @@ export class Usuario {
 
     static validarContrasena(contrasena) {
         if (typeof contrasena !== "string") {
-            throw new Error("La contraseña debe ser un texto)")
+            throw new Error("La contraseña debe ser un texto.")
         }
 
         if (contrasena.length < 12) {
-            throw new Error("La contraseña debe tener al menos 12 caracteres")
+            throw new Error("La contraseña debe tener al menos 12 caracteres.")
         }
 
         if (contrasena.length > 25) {
-            throw new Error("La contraseña no puede superar los 25 caracteres")
+            throw new Error("La contraseña no puede superar los 25 caracteres.")
+        }
+
+        if (!/[A-Z]/.test(contrasena)) {
+            throw new Error("La contraseña debe contener al menos una mayúscula.")
+        }
+
+        if (!/[a-z]/.test(contrasena)) {
+            throw new Error("La contraseña debe contener al menos una minúscula.")
+        }
+
+        if (!/[^a-zA-Z0-9]/.test(contrasena)) {
+            throw new Error("La contraseña debe contener al menos un carácter especial.")
         }
 
         return true
@@ -152,3 +164,5 @@ export class Usuario {
         )
     }
 }
+
+export default Usuario
