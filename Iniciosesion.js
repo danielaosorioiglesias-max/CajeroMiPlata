@@ -1,0 +1,796 @@
+import { Usuario } from "./src/Usuario.js"
+
+const USUARIOS = "usuariosBanco"
+const CREDENCIALES = "credencialesBanco"
+const CUENTAS = "cuentasBanco"
+const MOVIMIENTOS = "movimientosBanco"
+const SESION = "sesionBanco"
+const INTENTOS = "intentosBanco"
+const MAX_INTENTOS = 3
+
+function cargarDatos(clave, valorInicial) {
+    const datos = localStorage.getItem(clave)
+
+    if (datos === null) {
+        return valorInicial
+    }
+
+    return JSON.parse(datos)
+}
+
+function guardarDatos(clave, datos) {
+    localStorage.setItem(clave, JSON.stringify(datos))
+}
+
+class Autenticacion {
+
+    static buscarUsuario(nombreUsuario) {
+        if (typeof nombreUsuario !== "string") {
+            return null
+        }
+
+        const usuarios = cargarDatos(USUARIOS, [])
+        const nombreBuscado = nombreUsuario.trim().toLowerCase()
+
+        return usuarios.find(
+            usuario => usuario.usuario === nombreBuscado
+        ) ?? null
+    }
+
+    static obtenerUsuarioActivo() {
+        const id = sessionStorage.getItem(SESION)
+
+        if (!id) {
+            return null
+        }
+
+        const usuarios = cargarDatos(USUARIOS, [])
+
+        return usuarios.find(
+            usuario => usuario.id === id
+        ) ?? null
+    }
+
+    static cerrarSesion() {
+        sessionStorage.removeItem(SESION)
+    }
+
+    // Los intentos se cuentan por nombre de usuario (exista o no) para no revelar qué usuarios existen
+    static obtenerIntentos(nombreUsuario) {
+        const intentos = cargarDatos(INTENTOS, {})
+
+        return intentos[Autenticacion.normalizar(nombreUsuario)] ?? 0
+    }
+
+    static estaBloqueado(nombreUsuario) {
+        return Autenticacion.obtenerIntentos(nombreUsuario) >= MAX_INTENTOS
+    }
+
+    static registrarIntentoFallido(nombreUsuario) {
+        const intentos = cargarDatos(INTENTOS, {})
+        const clave = Autenticacion.normalizar(nombreUsuario)
+
+        intentos[clave] = (intentos[clave] ?? 0) + 1
+        guardarDatos(INTENTOS, intentos)
+
+        return intentos[clave]
+    }
+
+    static reiniciarIntentos(nombreUsuario) {
+        const intentos = cargarDatos(INTENTOS, {})
+
+        delete intentos[Autenticacion.normalizar(nombreUsuario)]
+        guardarDatos(INTENTOS, intentos)
+    }
+
+    static normalizar(nombreUsuario) {
+        return String(nombreUsuario ?? "").trim().toLowerCase()
+    }
+}
+
+
+function convertirHexadecimal(bytes) {
+    return Array.from(bytes)
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("")
+}
+
+async function generarHash(contrasena, salt) {
+    const encoder = new TextEncoder()
+
+    const clave = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(contrasena),
+        "PBKDF2",
+        false,
+        ["deriveBits"]
+    )
+
+    const bits = await crypto.subtle.deriveBits(
+        {
+            name: "PBKDF2",
+            salt,
+            iterations: 310000,
+            hash: "SHA-256"
+        },
+        clave,
+        256
+    )
+
+    return convertirHexadecimal(new Uint8Array(bits))
+}
+
+export async function crearCredencial(contrasena) {
+    Usuario.validarContrasena(contrasena)
+
+    const salt = crypto.getRandomValues(new Uint8Array(16))
+    const hash = await generarHash(contrasena, salt)
+
+    return {
+        salt: convertirHexadecimal(salt),
+        hash
+    }
+}
+
+export async function verificarContrasena(contrasena, credencial) {
+    if (!credencial || typeof contrasena !== "string") {
+        return false
+    }
+
+    const salt = Uint8Array.from(
+        credencial.salt.match(/.{2}/g),
+        valor => parseInt(valor, 16)
+    )
+
+    const hashIngresado = await generarHash(contrasena, salt)
+
+    return hashIngresado === credencial.hash
+}
+
+Autenticacion.iniciarSesion = async function(nombreUsuario, contrasena) {
+    if (Autenticacion.estaBloqueado(nombreUsuario)) {
+        throw new Error("Cuenta bloqueada por superar 3 intentos fallidos. Comunícate con el administrador.")
+    }
+
+    const usuario = Autenticacion.buscarUsuario(nombreUsuario)
+    const credenciales = cargarDatos(CREDENCIALES, {})
+    const credencial = usuario ? credenciales[usuario.id] : null
+
+    const esValida = await verificarContrasena(
+        contrasena,
+        credencial
+    )
+
+    if (!esValida) {
+        const intentos = Autenticacion.registrarIntentoFallido(nombreUsuario)
+
+        if (intentos >= MAX_INTENTOS) {
+            throw new Error("Cuenta bloqueada por superar 3 intentos fallidos. Comunícate con el administrador.")
+        }
+
+        throw new Error(`Usuario o contraseña incorrectos. Te quedan ${MAX_INTENTOS - intentos} intento(s).`)
+    }
+
+    Autenticacion.reiniciarIntentos(nombreUsuario)
+    sessionStorage.setItem(SESION, usuario.id)
+
+    return usuario
+}
+
+function mostrarIntentos(nombreUsuario) {
+    const intentos = Autenticacion.obtenerIntentos(nombreUsuario)
+    const bloqueado = intentos >= MAX_INTENTOS
+    const estado = document.getElementById("estado-bloqueo")
+
+    document.getElementById("contador-intentos").textContent = intentos
+
+    estado.textContent = bloqueado ? "Cuenta Bloqueada" : "Cuenta Activa"
+    estado.style.color = bloqueado ? "var(--color-danger)" : ""
+
+    document.getElementById("btn-submit-login").disabled = bloqueado
+}
+
+
+
+class Cuenta {
+
+    #saldo
+
+    constructor(numeroCuenta, titularId, tipo, saldo = 0) {
+        this.numeroCuenta = numeroCuenta
+        this.titularId = titularId
+        this.tipo = tipo
+        this.#saldo = saldo
+    }
+
+    get saldo() {
+        return this.#saldo
+    }
+
+    consultarSaldo() {
+        return this.#saldo
+    }
+
+    consignar(monto) {
+        if (!Number.isFinite(monto) || monto <= 0) {
+            throw new Error("El monto debe ser mayor a cero.")
+        }
+
+        this.#saldo += monto
+    }
+
+    retirar(monto) {
+        if (!Number.isFinite(monto) || monto <= 0) {
+            throw new Error("El monto debe ser mayor a cero.")
+        }
+
+        if (monto > this.#saldo) {
+            throw new Error("Saldo insuficiente.")
+        }
+
+        this.#saldo -= monto
+    }
+
+    toJSON() {
+        return {
+            numeroCuenta: this.numeroCuenta,
+            titularId: this.titularId,
+            tipo: this.tipo,
+            saldo: this.#saldo
+        }
+    }
+}
+
+class CuentaAhorro extends Cuenta {
+    constructor(numeroCuenta, titularId, saldo = 0) {
+        super(numeroCuenta, titularId, "ahorros", saldo)
+    }
+}
+
+class CuentaCorriente extends Cuenta {
+    constructor(numeroCuenta, titularId, saldo = 0) {
+        super(numeroCuenta, titularId, "corriente", saldo)
+    }
+}
+
+class TarjetaCredito extends Cuenta {
+    constructor(numeroCuenta, titularId, saldo = 0) {
+        super(numeroCuenta, titularId, "credito", saldo)
+    }
+}
+
+class UsuarioCliente extends Usuario {
+
+    #productos
+
+    constructor(datos, productos = []) {
+        super(
+            datos.identificacion,
+            datos.nombres,
+            datos.apellidos,
+            datos.celular,
+            datos.usuario,
+            datos.id
+        )
+
+        this.#productos = productos
+    }
+
+    get productos() {
+        return [...this.#productos]
+    }
+}
+
+function reconstruirCuenta(datos) {
+    switch (datos.tipo) {
+        case "ahorros":
+            return new CuentaAhorro(
+                datos.numeroCuenta,
+                datos.titularId,
+                datos.saldo
+            )
+
+        case "corriente":
+            return new CuentaCorriente(
+                datos.numeroCuenta,
+                datos.titularId,
+                datos.saldo
+            )
+
+        case "credito":
+            return new TarjetaCredito(
+                datos.numeroCuenta,
+                datos.titularId,
+                datos.saldo
+            )
+
+        default:
+            throw new Error("Tipo de producto desconocido.")
+    }
+}
+
+function cargarCuentas() {
+    return cargarDatos(CUENTAS, []).map(reconstruirCuenta)
+}
+
+function guardarCuentas(cuentas) {
+    guardarDatos(CUENTAS, cuentas)
+}
+
+function obtenerProductos(usuario) {
+    const cuentas = cargarCuentas()
+
+    let productos = cuentas.filter(
+        cuenta => cuenta.titularId === usuario.id
+    )
+
+    if (productos.length === 0) {
+        productos = [
+            new CuentaAhorro(crypto.randomUUID(), usuario.id),
+            new CuentaCorriente(crypto.randomUUID(), usuario.id),
+            new TarjetaCredito(crypto.randomUUID(), usuario.id)
+        ]
+
+        guardarCuentas([...cuentas, ...productos])
+    }
+
+    return productos
+}
+
+function mostrarProductos(datosUsuario) {
+    const productos = obtenerProductos(datosUsuario)
+
+    const cliente = new UsuarioCliente(datosUsuario, productos)
+
+    const selector = document.getElementById("select-producto-activo")
+    const selectorDestino = document.getElementById("select-producto-destino")
+
+    const nombresProductos = {
+        ahorros: "Cuenta de Ahorros",
+        corriente: "Cuenta Corriente",
+        credito: "Tarjeta de Crédito"
+    }
+
+    selector.replaceChildren()
+    selectorDestino.replaceChildren()
+
+    cliente.productos.forEach(producto => {
+        const opcion = new Option(
+            nombresProductos[producto.tipo],
+            producto.numeroCuenta
+        )
+
+        selector.add(opcion)
+
+        if (producto.tipo !== "credito") {
+            selectorDestino.add(
+                new Option(
+                    nombresProductos[producto.tipo],
+                    producto.numeroCuenta
+                )
+            )
+        }
+    })
+
+    document.getElementById("cajero-nombre-cliente").textContent =
+        `${cliente.nombres} ${cliente.apellidos}`
+
+    document.getElementById("cajero-id-cliente").textContent =
+        `ID: ${cliente.id}`
+
+    mostrarSaldoActivo()
+}
+
+function mostrarSaldoActivo() {
+    const usuario = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuario) {
+        return
+    }
+
+    const numeroCuenta = document.getElementById(
+        "select-producto-activo"
+    ).value
+
+    const cuenta = cargarCuentas().find(
+        cuenta =>
+            cuenta.numeroCuenta === numeroCuenta &&
+            cuenta.titularId === usuario.id
+    )
+
+    if (!cuenta) {
+        return
+    }
+
+    document.getElementById("visor-saldo-principal").textContent =
+        cuenta.consultarSaldo().toLocaleString("es-CO", {
+            style: "currency",
+            currency: "COP"
+        })
+
+    document.getElementById("saldo-numero-cuenta").textContent =
+        `Producto: ${cuenta.numeroCuenta}`
+
+    const nombresProductos = {
+        ahorros: "Cuenta de Ahorros",
+        corriente: "Cuenta Corriente",
+        credito: "Tarjeta de Crédito"
+    }
+
+    document.getElementById("saldo-tipo-cuenta").textContent =
+        `Resumen de ${nombresProductos[cuenta.tipo]}`
+}
+
+
+class Movimiento {
+
+    constructor(numeroCuenta, tipo, valor, descripcion) {
+        this.id = crypto.randomUUID()
+        this.numeroCuenta = numeroCuenta
+        this.fecha = new Date().toISOString()
+        this.tipo = tipo
+        this.valor = valor
+        this.descripcion = descripcion
+    }
+}
+
+class Transaccion {
+
+    static transferir(origen, destino, monto) {
+        if (!Number.isFinite(monto) || monto <= 0) {
+            throw new Error("El monto debe ser mayor a cero.")
+        }
+
+        if (origen.numeroCuenta === destino.numeroCuenta) {
+            throw new Error("Las cuentas deben ser diferentes.")
+        }
+
+        if (
+            origen.tipo === "credito" ||
+            destino.tipo === "credito"
+        ) {
+            throw new Error("No se permiten transferencias con tarjetas de crédito.")
+        }
+
+        if (origen.saldo < monto) {
+            throw new Error("Saldo insuficiente.")
+        }
+
+        origen.retirar(monto)
+        destino.consignar(monto)
+    }
+}
+
+function registrarMovimientos(origen, destino, monto) {
+    const movimientos = cargarDatos(MOVIMIENTOS, [])
+
+    movimientos.push(
+        new Movimiento(
+            origen.numeroCuenta,
+            "Transferencia enviada",
+            -monto,
+            `Destino: ${destino.numeroCuenta}`
+        )
+    )
+
+    movimientos.push(
+        new Movimiento(
+            destino.numeroCuenta,
+            "Transferencia recibida",
+            monto,
+            `Origen: ${origen.numeroCuenta}`
+        )
+    )
+
+    guardarDatos(MOVIMIENTOS, movimientos)
+}
+
+function transferirEntreUsuarios(
+    numeroOrigen,
+    nombreDestinatario,
+    tipoDestino,
+    monto
+) {
+    const usuarioActivo = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuarioActivo) {
+        throw new Error("Debes iniciar sesión.")
+    }
+
+    const destinatario = Autenticacion.buscarUsuario(nombreDestinatario)
+
+    if (!destinatario) {
+        throw new Error("El usuario destinatario no existe.")
+    }
+
+    if (destinatario.id === usuarioActivo.id) {
+        throw new Error("Utiliza una transferencia entre productos propios.")
+    }
+
+    obtenerProductos(destinatario)
+
+    const cuentas = cargarCuentas()
+
+    const origen = cuentas.find(
+        cuenta =>
+            cuenta.numeroCuenta === numeroOrigen &&
+            cuenta.titularId === usuarioActivo.id
+    )
+
+    const destino = cuentas.find(
+        cuenta =>
+            cuenta.titularId === destinatario.id &&
+            cuenta.tipo === tipoDestino
+    )
+
+    if (!origen) {
+        throw new Error("La cuenta de origen no pertenece al usuario.")
+    }
+
+    if (!destino) {
+        throw new Error("El destinatario no tiene ese producto.")
+    }
+
+    Transaccion.transferir(origen, destino, monto)
+
+    guardarCuentas(cuentas)
+    registrarMovimientos(origen, destino, monto)
+
+    return true
+}
+
+
+function transferirEntreProductos(numeroOrigen, numeroDestino, monto) {
+    const usuario = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuario) {
+        throw new Error("Debes iniciar sesión.")
+    }
+
+    const cuentas = cargarCuentas()
+
+    const origen = cuentas.find(
+        cuenta =>
+            cuenta.numeroCuenta === numeroOrigen &&
+            cuenta.titularId === usuario.id
+    )
+
+    const destino = cuentas.find(
+        cuenta =>
+            cuenta.numeroCuenta === numeroDestino &&
+            cuenta.titularId === usuario.id
+    )
+
+    if (!origen || !destino) {
+        throw new Error("Las cuentas deben pertenecer al mismo usuario.")
+    }
+
+    Transaccion.transferir(origen, destino, monto)
+
+    guardarCuentas(cuentas)
+    registrarMovimientos(origen, destino, monto)
+
+    return true
+}
+
+function mostrarMensaje(texto, tipo = "exito") {
+    const alerta = document.getElementById("mensaje-feedback")
+    const mensaje = document.getElementById("mensaje-texto")
+
+    mensaje.textContent = texto
+    alerta.className = `alerta alerta--${tipo}`
+}
+
+function mostrarVista(idVista) {
+    document.querySelectorAll(".vista").forEach(
+        vista => vista.classList.add("oculto")
+    )
+
+    document.getElementById(idVista).classList.remove("oculto")
+}
+
+function mostrarMovimientos() {
+    const usuario = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuario) {
+        return
+    }
+
+    const numeroCuenta = document.getElementById(
+        "select-producto-activo"
+    ).value
+
+    const cuentas = cargarCuentas()
+
+    const cuenta = cuentas.find(
+        cuenta =>
+            cuenta.numeroCuenta === numeroCuenta &&
+            cuenta.titularId === usuario.id
+    )
+
+    if (!cuenta) {
+        return
+    }
+
+    const movimientos = cargarDatos(MOVIMIENTOS, [])
+        .filter(movimiento => movimiento.numeroCuenta === numeroCuenta)
+        .reverse()
+
+    const tabla = document.getElementById("tabla-movimientos-body")
+
+    tabla.replaceChildren()
+
+    if (movimientos.length === 0) {
+        const fila = document.createElement("tr")
+        const celda = document.createElement("td")
+
+        celda.colSpan = 3
+        celda.textContent = "Aún no se registran movimientos."
+        fila.appendChild(celda)
+        tabla.appendChild(fila)
+
+        return
+    }
+
+    movimientos.forEach(movimiento => {
+        const fila = document.createElement("tr")
+
+        const fecha = document.createElement("td")
+        const tipo = document.createElement("td")
+        const valor = document.createElement("td")
+
+        fecha.textContent = new Date(movimiento.fecha).toLocaleString("es-CO")
+        tipo.textContent = movimiento.tipo
+        valor.textContent = movimiento.valor.toLocaleString("es-CO", {
+            style: "currency",
+            currency: "COP"
+        })
+
+        fila.append(fecha, tipo, valor)
+        tabla.appendChild(fila)
+    })
+}
+
+function actualizarCajero() {
+    const usuario = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuario) {
+        return
+    }
+
+    mostrarProductos(usuario)
+    mostrarMovimientos()
+}
+
+document.getElementById("login-usuario")?.addEventListener("input", function() {
+    mostrarIntentos(this.value)
+})
+
+document.getElementById("form-login")?.addEventListener("submit", async function(evento) {
+    evento.preventDefault()
+
+    const usuario = document.getElementById("login-usuario").value
+    const contrasena = document.getElementById("login-pass").value
+
+    try {
+        await Autenticacion.iniciarSesion(usuario, contrasena)
+
+        mostrarVista("vista-cajero")
+        actualizarCajero()
+
+        mostrarMensaje("Inicio de sesión exitoso.")
+        this.reset()
+        mostrarIntentos("")
+
+    } catch (error) {
+        mostrarMensaje(error.message, "error")
+        mostrarIntentos(usuario)
+    }
+})
+
+document.getElementById("select-producto-activo")?.addEventListener("change", () => {
+    mostrarSaldoActivo()
+    mostrarMovimientos()
+})
+
+document.getElementById("select-tipo-transferencia")?.addEventListener("change", function() {
+    const esPropia = this.value === "propia"
+
+    document.getElementById("grupo-destino-propio")
+        .classList.toggle("oculto", !esPropia)
+
+    document.getElementById("grupo-destino-tercero")
+        .classList.toggle("oculto", esPropia)
+})
+
+document.getElementById("form-transferir")?.addEventListener("submit", function(evento) {
+    evento.preventDefault()
+
+    const numeroOrigen = document.getElementById("select-producto-activo").value
+    const tipo = document.getElementById("select-tipo-transferencia").value
+    const monto = Number(document.getElementById("input-monto-transferir").value)
+
+    try {
+        if (tipo === "propia") {
+            const destino = document.getElementById("select-producto-destino").value
+
+            transferirEntreProductos(numeroOrigen, destino, monto)
+
+        } else {
+            const usuarioDestino = document.getElementById("input-usuario-destino").value
+            const tipoCuenta = document.getElementById("select-tipo-cuenta-tercero").value
+
+            transferirEntreUsuarios(
+                numeroOrigen,
+                usuarioDestino,
+                tipoCuenta,
+                monto
+            )
+        }
+
+        mostrarMensaje("Transferencia realizada correctamente.")
+        actualizarCajero()
+        this.reset()
+
+    } catch (error) {
+        mostrarMensaje(error.message, "error")
+    }
+})
+
+document.getElementById("form-consignar")?.addEventListener("submit", function(evento) {
+    evento.preventDefault()
+
+    const usuario = Autenticacion.obtenerUsuarioActivo()
+
+    if (!usuario) {
+        mostrarMensaje("Debes iniciar sesión.", "error")
+        return
+    }
+
+    const numeroCuenta = document.getElementById("select-producto-activo").value
+    const monto = Number(document.getElementById("input-monto-consignar").value)
+
+    try {
+        const cuentas = cargarCuentas()
+
+        const cuenta = cuentas.find(
+            cuenta =>
+                cuenta.numeroCuenta === numeroCuenta &&
+                cuenta.titularId === usuario.id
+        )
+
+        if (!cuenta || cuenta.tipo === "credito") {
+            throw new Error("Selecciona una cuenta válida.")
+        }
+
+        cuenta.consignar(monto)
+
+        guardarCuentas(cuentas)
+
+        const movimientos = cargarDatos(MOVIMIENTOS, [])
+
+        movimientos.push(
+            new Movimiento(
+                cuenta.numeroCuenta,
+                "Consignación",
+                monto,
+                "Depósito en cajero"
+            )
+        )
+
+        guardarDatos(MOVIMIENTOS, movimientos)
+
+        mostrarMensaje("Consignación realizada correctamente.")
+        actualizarCajero()
+        this.reset()
+
+    } catch (error) {
+        mostrarMensaje(error.message, "error")
+    }
+})
+
+document.getElementById("btn-cerrar-sesion")?.addEventListener("click", () => {
+    Autenticacion.cerrarSesion()
+    mostrarVista("vista-inicio")
+    mostrarMensaje("Sesión cerrada correctamente.")
+})
