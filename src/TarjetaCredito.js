@@ -1,7 +1,7 @@
 // TarjetaCredito.js - HERENCIA: extiende Cuenta.
 // POLIMORFISMO: redefine limiteRetiro(), retirar(), detalles(), _validarAbono() y las propiedades
 // puedeEnviar / permiteCuotas, de modo que el cajero trata igual a todos los productos.
-// En la tarjeta el "saldo" es el CUPO DISPONIBLE: cada compra lo reduce y cada pago lo recupera.
+// En la tarjeta el "saldo" es el CUPO DISPONIBLE: cada compra lo reduce y cada pago de capital lo recupera.
 class TarjetaCredito extends Cuenta {
   static PREFIJO = "TC";
   static TITULO = "Tarjeta de Crédito Ultra Plata";
@@ -24,13 +24,19 @@ class TarjetaCredito extends Cuenta {
   constructor(numero, saldo = TarjetaCredito.CUPO_INICIAL, movimientos = [], cupo = TarjetaCredito.CUPO_INICIAL, compras = []) {
     super(numero, saldo, movimientos);
     this.#cupo = cupo;
-    this.#compras = (compras ?? []).map((compra) => ({ ...compra }));
+    // Compras guardadas antes de este cambio no traen capital/interés pendiente.
+    this.#compras = (compras ?? []).map((compra) => ({
+      ...compra,
+      capitalPendiente: compra.capitalPendiente ?? compra.monto,
+      interesPendiente: compra.interesPendiente ?? 0
+    }));
   }
 
   static desdeJSON(datos) {
     return new TarjetaCredito(datos.numero, datos.saldo, datos.movimientos, datos.cupo, datos.compras);
   }
 
+  // ── Identidad y reglas del producto ───────────────────
   get clave() { return "credito"; }
   get tipo() { return TarjetaCredito.TITULO; }
   get regla() { return TarjetaCredito.REGLA; }
@@ -44,11 +50,6 @@ class TarjetaCredito extends Cuenta {
     return this.#cupo;
   }
 
-  // Deuda de capital pendiente: lo que se ha usado del cupo.
-  get deuda() {
-    return redondear(this.#cupo - this.saldo);
-  }
-
   get compras() {
     return this.#compras.map((compra) => ({ ...compra }));
   }
@@ -57,6 +58,31 @@ class TarjetaCredito extends Cuenta {
     return this.saldo;
   }
 
+  // ── Deuda ─────────────────────────────────────────────
+  // Capital pendiente: lo que se ha usado del cupo.
+  get deudaCapital() {
+    return redondear(this.#cupo - this.saldo);
+  }
+
+  get interesesPendientes() {
+    return redondear(this.#compras.reduce((suma, c) => suma + c.interesPendiente, 0));
+  }
+
+  // Interés que se causaría con el próximo pago (un ciclo sobre el capital pendiente).
+  get interesDelCiclo() {
+    return redondear(this.#compras.reduce((suma, c) => suma + this.#interesDe(c), 0));
+  }
+
+  // Lo máximo que se puede pagar hoy.
+  get deudaTotal() {
+    return redondear(this.deudaCapital + this.interesesPendientes + this.interesDelCiclo);
+  }
+
+  #interesDe(compra) {
+    return compra.tasa > 0 ? redondear(compra.capitalPendiente * compra.tasa) : 0;
+  }
+
+  // ── Cálculo de cuotas ─────────────────────────────────
   static calcularTasaInteres(cuotas) {
     if (!Number.isInteger(cuotas) || cuotas < 1 || cuotas > TarjetaCredito.MAX_CUOTAS) {
       throw new OperacionError(`El número de cuotas debe ser un entero entre 1 y ${TarjetaCredito.MAX_CUOTAS}.`);
@@ -93,6 +119,7 @@ class TarjetaCredito extends Cuenta {
     };
   }
 
+  // ── Compra: guarda el estado de cada compra ───────────
   comprar(monto, cuotas) {
     const simulacion = this.simularCompra(monto, cuotas);
 
@@ -101,7 +128,12 @@ class TarjetaCredito extends Cuenta {
     }
 
     this._debitar(monto);
-    this.#compras.push({ ...simulacion, fecha: new Date().toISOString() });
+    this.#compras.push({
+      ...simulacion,
+      fecha: new Date().toISOString(),
+      capitalPendiente: monto,
+      interesPendiente: 0
+    });
     this._registrar(
       "Compra",
       -monto,
@@ -110,11 +142,65 @@ class TarjetaCredito extends Cuenta {
     return simulacion;
   }
 
-  // Pagar la tarjeta es abonar a la deuda (reutiliza consignar de Cuenta).
-  pagar(monto) {
-    return this.consignar(monto);
+  // ── Pago: una sola rutina para todos los caminos ──────
+  #aplicarPago(monto, tipo, detalle) {
+    this._validarMonto(monto);
+    this._validarAbono(monto);
+
+    // 1) Causar el interés del ciclo (se calcula sobre el capital antes de pagar)
+    for (const c of this.#compras) {
+      c.interesPendiente = redondear(c.interesPendiente + this.#interesDe(c));
+    }
+
+    let restante = monto;
+    let pagoIntereses = 0;
+    let pagoCapital = 0;
+
+    // 2) Primero intereses
+    for (const c of this.#compras) {
+      const x = Math.min(restante, c.interesPendiente);
+      c.interesPendiente = redondear(c.interesPendiente - x);
+      pagoIntereses = redondear(pagoIntereses + x);
+      restante = redondear(restante - x);
+    }
+
+    // 3) La diferencia abona a capital (compra más antigua primero)
+    for (const c of this.#compras) {
+      const x = Math.min(restante, c.capitalPendiente);
+      c.capitalPendiente = redondear(c.capitalPendiente - x);
+      pagoCapital = redondear(pagoCapital + x);
+      restante = redondear(restante - x);
+    }
+
+    // 4) Solo el capital recupera el cupo
+    if (pagoCapital > 0) {
+      this._acreditar(pagoCapital);
+    }
+
+    this._registrar(
+      tipo,
+      monto,
+      `${detalle} · Intereses ${cop(pagoIntereses)} · Capital ${cop(pagoCapital)}`
+    );
+
+    return { pagado: monto, intereses: pagoIntereses, capital: pagoCapital, saldo: this.saldo };
   }
 
+  pagar(monto) {
+    return this.#aplicarPago(monto, this._tipoAbono, this._detalleAbono);
+  }
+
+  // Mantiene el contrato de Cuenta (devuelve el saldo) pero con la lógica nueva.
+  consignar(monto) {
+    this.#aplicarPago(monto, this._tipoAbono, this._detalleAbono);
+    return this.saldo;
+  }
+
+  recibirTransferencia(monto, origen) {
+    this.#aplicarPago(monto, "Transferencia", `Recibida de ${origen}`);
+  }
+
+  // ── Polimorfismo: reglas propias de la tarjeta ────────
   limiteRetiro() {
     return Math.max(this.saldo, 0);
   }
@@ -124,18 +210,20 @@ class TarjetaCredito extends Cuenta {
   }
 
   _validarAbono(monto) {
-    if (this.deuda <= 0) {
+    if (this.deudaTotal <= 0) {
       throw new OperacionError("La tarjeta no tiene deuda pendiente.");
     }
-    if (monto > this.deuda) {
-      throw new OperacionError(`El pago no puede superar la deuda actual de ${cop(this.deuda)}.`);
+    if (monto > this.deudaTotal) {
+      throw new OperacionError(`El pago no puede superar la deuda actual de ${cop(this.deudaTotal)}.`);
     }
   }
 
   detalles() {
     const filas = [
       ["Cupo total", this.#cupo],
-      ["Deuda actual", this.deuda],
+      ["Deuda de capital", this.deudaCapital],
+      ["Intereses a pagar", redondear(this.interesesPendientes + this.interesDelCiclo)],
+      ["Total a pagar hoy", this.deudaTotal],
       ["Tasas", "≤ 2 cuotas: 0% | 3-6 cuotas: 1.9% | ≥ 7 cuotas: 2.3% mensual"]
     ];
 
