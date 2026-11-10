@@ -233,6 +233,32 @@ document.getElementById("form-login")?.addEventListener("submit", async function
         this.reset()
         mostrarIntentos("")
 
+        //ajuste botones
+
+        // 1. Ocultar el botón de registro (si existe, ajusta el ID al que tengas en tu HTML)
+        const btnRegistro = document.getElementById('btn-nav-registro');
+        const btnInicio=document.getElementById('btn-nav-inicio');
+        const btnCRUD=document.getElementById('btn-nav-crud');
+        if (btnRegistro) {
+            btnRegistro.classList.add('oculto'); // O btnRegistro.style.display = 'none';
+            
+        }
+        if (btnInicio) {
+            btnInicio.classList.add('oculto'); // O btnRegistro.style.display = 'none';
+            
+        }
+        if (btnCRUD) {
+            btnCRUD.classList.add('oculto'); // O btnRegistro.style.display = 'none';
+            
+        }
+
+        // 2. Cambiar el texto del botón de login a "Sesión Iniciada"
+        const btnLogin = document.getElementById('btn-nav-login');
+        btnLogin.textContent = 'Sesión Iniciada';
+        
+        // (Opcional) Quitarle la funcionalidad de hacer clic para que no lo devuelva al login
+        btnLogin.style.pointerEvents = 'none';
+
     } catch (error) {
         mostrarMensaje(error.message, "error")
         mostrarIntentos(usuario)
