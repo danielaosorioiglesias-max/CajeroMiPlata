@@ -5,6 +5,10 @@ const USUARIOS = "usuariosBanco"
 const CREDENCIALES = "credencialesBanco"
 const SESION = "sesionBanco"
 const INTENTOS = "intentosBanco"
+const ADMIN = "administradorBanco"
+const ID_ADMIN = "administrador-demo"
+export const USUARIO_ADMIN = "admin"
+const CONTRASENA_ADMIN_DEMO = "Administrador123!"
 const MAX_INTENTOS = 3
 
 function cargarDatos(clave, valorInicial) {
@@ -21,15 +25,21 @@ function guardarDatos(clave, datos) {
     localStorage.setItem(clave, JSON.stringify(datos))
 }
 
-class Autenticacion {
+export class Autenticacion {
 
     static buscarUsuario(nombreUsuario) {
         if (typeof nombreUsuario !== "string") {
             return null
         }
 
-        const usuarios = cargarDatos(USUARIOS, [])
         const nombreBuscado = nombreUsuario.trim().toLowerCase()
+         const administrador = cargarDatos(ADMIN, null)
+
+        if (administrador?.usuario === nombreBuscado) {
+            return administrador
+        }
+
+        const usuarios = cargarDatos(USUARIOS, [])
 
         return usuarios.find(
             usuario => usuario.usuario === nombreBuscado
@@ -44,14 +54,19 @@ class Autenticacion {
         }
 
         const usuarios = cargarDatos(USUARIOS, [])
+        const administrador = cargarDatos(ADMIN, null)
 
         return usuarios.find(
             usuario => usuario.id === id
-        ) ?? null
+        ) ?? (administrador?.id === id ? administrador : null)
     }
 
     static cerrarSesion() {
         sessionStorage.removeItem(SESION)
+    }
+
+     static esAdministrador(usuario) {
+        return usuario?.id === ID_ADMIN && usuario?.rol === "admin"
     }
 
     // Los intentos se cuentan por nombre de usuario (exista o no) para no revelar qué usuarios existen
@@ -85,6 +100,40 @@ class Autenticacion {
     static normalizar(nombreUsuario) {
         return String(nombreUsuario ?? "").trim().toLowerCase()
     }
+}
+
+async function inicializarAdministrador() {
+    if (localStorage.getItem(ADMIN) !== null) {
+        return
+    }
+
+    const administrador = {
+        id: ID_ADMIN,
+        identificacion: "ADMIN",
+        nombres: "Administrador",
+        apellidos: "Mi Plata",
+        celular: "",
+        usuario: USUARIO_ADMIN,
+        rol: "admin"
+    }
+    const credenciales = cargarDatos(CREDENCIALES, {})
+
+    if (!credenciales[ID_ADMIN]) {
+        credenciales[ID_ADMIN] = await crearCredencial(CONTRASENA_ADMIN_DEMO)
+        guardarDatos(CREDENCIALES, credenciales)
+    }
+
+    guardarDatos(ADMIN, administrador)
+}
+
+let administradorListo
+
+function asegurarAdministrador() {
+    if (!administradorListo) {
+        administradorListo = inicializarAdministrador()
+    }
+
+    return administradorListo
 }
 
 
@@ -147,6 +196,8 @@ export async function verificarContrasena(contrasena, credencial) {
 }
 
 Autenticacion.iniciarSesion = async function(nombreUsuario, contrasena) {
+    await asegurarAdministrador()
+
     if (Autenticacion.estaBloqueado(nombreUsuario)) {
         throw new Error("Cuenta bloqueada por superar 3 intentos fallidos. Comunícate con el administrador.")
     }
@@ -208,6 +259,28 @@ function mostrarVista(idVista) {
     )
 
     document.getElementById(idVista).classList.remove("oculto")
+     document.querySelectorAll(".nav-link").forEach(
+        boton => boton.classList.remove("active")
+    )
+
+    const botonesVista = {
+        "vista-inicio": "btn-nav-inicio",
+        "vista-login": "btn-nav-login",
+        "vista-registro": "btn-nav-registro",
+        "vista-crud": "btn-nav-crud"
+    }
+    const botonActivo = document.getElementById(botonesVista[idVista])
+    botonActivo?.classList.add("active")
+}
+
+function restaurarNavegacion() {
+    document.querySelectorAll(".nav-link").forEach(
+        boton => boton.classList.remove("oculto")
+    )
+
+    const botonLogin = document.getElementById("btn-nav-login")
+    botonLogin.textContent = "Iniciar Sesión"
+    botonLogin.style.pointerEvents = "auto"
 }
 
 document.getElementById("login-usuario")?.addEventListener("input", function() {
@@ -223,13 +296,20 @@ document.getElementById("form-login")?.addEventListener("submit", async function
     try {
         const datosUsuario = await Autenticacion.iniciarSesion(usuario, contrasena)
 
-        // Los productos (CuentaAhorros, CuentaCorriente, TarjetaCredito) los administra Banco.js
-        Banco.cargar()
-        Cajero.abrir(new Cliente(datosUsuario, Banco.productosDe(datosUsuario.id)))
+        if (Autenticacion.esAdministrador(datosUsuario)) {
+            mostrarVista("vista-crud")
+            window.dispatchEvent(new Event("admin:actualizar"))
+            mostrarMensaje("Inicio de sesión de administrador exitoso.")
+        } else {
+            // Los productos (CuentaAhorros, CuentaCorriente, TarjetaCredito) los administra Banco.js
+            Banco.cargar()
+            Cajero.abrir(new Cliente(datosUsuario, Banco.productosDe(datosUsuario.id)))
 
-        mostrarVista("vista-cajero")
+            mostrarVista("vista-cajero")
 
-        mostrarMensaje("Inicio de sesión exitoso.")
+            mostrarMensaje("Inicio de sesión exitoso.")
+        }
+
         this.reset()
         mostrarIntentos("")
 
@@ -265,10 +345,28 @@ document.getElementById("form-login")?.addEventListener("submit", async function
     }
 })
 
-
 document.getElementById("btn-cerrar-sesion")?.addEventListener("click", () => {
     Autenticacion.cerrarSesion()
     Cajero.cerrar()
     mostrarVista("vista-inicio")
+    restaurarNavegacion()
     mostrarMensaje("Sesión cerrada correctamente.")
+})
+
+document.getElementById("btn-admin-cerrar-sesion")?.addEventListener("click", () => {
+    Autenticacion.cerrarSesion()
+    mostrarVista("vista-inicio")
+    restaurarNavegacion()
+    mostrarMensaje("Sesión de administrador cerrada correctamente.")
+})
+
+window.addEventListener("admin:solicitar-acceso", () => {
+    if (Autenticacion.esAdministrador(Autenticacion.obtenerUsuarioActivo())) {
+        mostrarVista("vista-crud")
+        window.dispatchEvent(new Event("admin:actualizar"))
+        return
+    }
+
+    mostrarVista("vista-login")
+    mostrarMensaje("Inicia sesión con la cuenta de administrador para gestionar usuarios.", "advertencia")
 })

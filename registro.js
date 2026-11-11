@@ -1,6 +1,6 @@
 
 import { Usuario } from "./src/Usuario.js"
-import { crearCredencial } from "./Iniciosesion.js"
+import { crearCredencial, USUARIO_ADMIN } from "./Iniciosesion.js"
 
 const USUARIOS = "usuariosBanco"
 const CREDENCIALES = "credencialesBanco"
@@ -43,6 +43,10 @@ export function registrarUsuario(nuevoUsuario) {
 
     if (!(nuevoUsuario instanceof Usuario)) {
         throw new Error("Debes proporcionar un objeto Usuario.")
+    }
+
+    if (nuevoUsuario.usuario === USUARIO_ADMIN) {
+        throw new Error("Ese nombre de usuario está reservado para la cuenta administradora.")
     }
 
     const usuarios = cargarUsuarios()

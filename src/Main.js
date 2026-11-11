@@ -26,7 +26,7 @@ document.getElementById('btn-nav-login').addEventListener('click',()=>{
 });
 
 document.getElementById('btn-nav-crud').addEventListener('click',()=>{
-    cambiarVista('vista-crud','btn-nav-crud');
+    window.dispatchEvent(new Event('admin:solicitar-acceso'));
 });
 
 document.getElementById('btn-nav-inicio').addEventListener('click',()=>{
