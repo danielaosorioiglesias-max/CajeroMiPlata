@@ -431,6 +431,15 @@ body {
     border-color: var(--color-accent);
 }
 
+.form__group input[readonly] {
+    opacity: 0.75;
+    cursor: not-allowed;
+}
+
+.form__group input[readonly]:focus {
+    border-color: var(--border-color);
+}
+
 .help-text {
     font-size: 0.78rem;
     color: var(--text-secondary);
