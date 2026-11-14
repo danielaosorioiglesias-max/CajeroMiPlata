@@ -113,15 +113,9 @@
                             <label for="reg-id">Número de Identificación (Cédula o Pasaporte)</label>
                             <input type="text" id="reg-id" placeholder="Ej. 1020304050" required>
                         </div>
-                        <div class="form__row">
-                            <div class="form__group">
-                                <label for="reg-nombres">Nombres</label>
-                                <input type="text" id="reg-nombres" placeholder="Ej. Juan Fernando" required>
-                            </div>
-                            <div class="form__group">
-                                <label for="reg-apellidos">Apellidos</label>
-                                <input type="text" id="reg-apellidos" placeholder="Ej. Pérez Gómez" required>
-                            </div>
+                        <div class="form__group">
+                            <label for="reg-nombre">Nombre Completo</label>
+                            <input type="text" id="reg-nombre" placeholder="Ej. Juan Pérez" required>
                         </div>
                         <div class="form__row">
                             <div class="form__group">
@@ -137,7 +131,6 @@
                             <div class="form__group">
                                 <label for="reg-pass">Contraseña</label>
                                 <input type="password" id="reg-pass" placeholder="••••••••" required>
-                                <small class="help-text">12 a 25 caracteres, con mayúscula, minúscula y carácter especial.</small>
                             </div>
                             <div class="form__group">
                                 <label for="reg-pass-confirm">Confirmar Contraseña</label>
@@ -372,7 +365,7 @@
                             <!-- Si es a cuenta de otro usuario -->
                             <div class="form__row oculto" id="grupo-destino-tercero">
                                 <div class="form__group">
-                                    <label for="input-usuario-destino">Usuario o identificación del destinatario</label>
+                                    <label for="input-usuario-destino">Usuario o ID del Destinatario</label>
                                     <input type="text" id="input-usuario-destino" placeholder="Ej. maria_g">
                                 </div>
                                 <div class="form__group">
@@ -380,7 +373,6 @@
                                     <select id="select-tipo-cuenta-tercero" class="select-input">
                                         <option value="ahorros">Cuenta de Ahorros</option>
                                         <option value="corriente">Cuenta Corriente</option>
-                                        <option value="credito">Tarjeta de Crédito (abono)</option>
                                     </select>
                                 </div>
                             </div>
