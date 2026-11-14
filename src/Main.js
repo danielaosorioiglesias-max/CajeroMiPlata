@@ -26,7 +26,7 @@ document.getElementById('btn-nav-login').addEventListener('click',()=>{
 });
 
 document.getElementById('btn-nav-crud').addEventListener('click',()=>{
-    cambiarVista('vista-crud','btn-nav-crud');
+    window.dispatchEvent(new Event('admin:solicitar-acceso'));
 });
 
 document.getElementById('btn-nav-inicio').addEventListener('click',()=>{
@@ -91,7 +91,28 @@ botonesCajero.forEach(boton => {
         
         // Excepción: Si el botón presionado es el de cerrar sesión, no buscamos paneles
         if (this.id === 'btn-cerrar-sesion') {
-            // Aquí luego pondrás tu lógica para cerrar sesión
+            const btnRegistro=document.getElementById('btn-nav-registro');
+            const btnInicio=document.getElementById('btn-nav-inicio');
+            const btnCRUD=document.getElementById('btn-nav-crud');
+            const btnLogin=document.getElementById('btn-nav-login')
+            if (btnRegistro){
+                btnRegistro.classList.remove('oculto');
+            }
+            
+            if(btnInicio){
+                btnInicio.classList.remove('oculto')
+            }
+            
+            if(btnCRUD){
+                btnCRUD.classList.remove('oculto')
+            }
+
+            if(btnLogin){
+                btnLogin.textContent='Iniciar Sesión';
+                btnLogin.style.pointerEvents='auto'
+            }
+            
+            
             cambiarVista('vista-inicio', 'btn-nav-inicio'); 
             return; 
         }
