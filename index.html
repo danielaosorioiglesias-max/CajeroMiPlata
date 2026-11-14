@@ -420,20 +420,24 @@
                                     <p>Actualiza tu información personal registrada.</p>
                                 </div>
                                 <form id="form-editar-perfil" class="form">
-                                    <div class="form__group">
-                                        <label for="perfil-id">Identificación</label>
-                                        <input type="text" id="perfil-id" required>
-                                    </div>
-                                    <div class="form__group">
-                                        <label for="perfil-nombre">Nombre Completo</label>
-                                        <input type="text" id="perfil-nombre" required>
-                                    </div>
-                                    <div class="form__group">
-                                        <label for="perfil-celular">Número de Celular</label>
-                                        <input type="tel" id="perfil-celular" required>
-                                    </div>
-                                    <button type="submit" class="btn btn--primary">Guardar Datos</button>
-                                </form>
+                            <div class="form__group">
+                                <label for="perfil-id">Identificación</label>
+                                <input type="text" id="perfil-id" readonly>
+                            </div>
+                            <div class="form__group">
+                                <label for="perfil-nombre">Nombre Completo</label>
+                                <input type="text" id="perfil-nombre" required>
+                            </div>
+                            <div class="form__group">
+                                <label for="perfil-celular">Número de Celular</label>
+                                <input type="tel" id="perfil-celular" readonly>
+                            </div>
+                            <div class="form__group">
+                                <label for="perfil-usuario">Nombre de Usuario</label>
+                                <input type="text" id="perfil-usuario" readonly>
+                            </div>
+                            <button type="submit" class="btn btn--primary">Guardar Datos</button>
+                        </form>
                             </div>
 
                             <!-- Cambiar contraseña -->
@@ -487,7 +491,27 @@
         </div>
     </footer>
 
-    <!-- Enlace para tu futuro archivo JavaScript -->
-    <script src="app.js"></script>
+    <!-- Navegación general (script clásico) -->
+    <script src="src/Main.js"></script>
+    <!-- Modelo bancario (POO): el orden importa, cada clase usa las anteriores -->
+    <script src="src/Utilidades.js"></script>
+    <script src="src/Movimiento.js"></script>
+    <script src="src/Cuenta.js"></script>
+    <script src="src/CuentaAhorros.js"></script>
+    <script src="src/CuentaCorriente.js"></script>
+    <script src="src/TarjetaCredito.js"></script>
+    <script src="src/Banco.js"></script>
+    <!-- Panel del cajero y sus módulos -->
+    <script src="src/Cajero.js"></script>
+    <script src="src/Saldo.js"></script>
+    <script src="src/Consignar.js"></script>
+    <script src="src/Retirar.js"></script>
+    <script src="src/Transferir.js"></script>
+    <script src="src/Movimientos.js"></script>
+    <script src="src/Perfil.js"></script>
+    <!-- Módulos de autenticación -->
+    <script type="module" src="./registro.js"></script>
+    <script type="module" src="./Iniciosesion.js"></script>
+    <script type="module" src="./CambiarContrasena.js"></script>
 </body>
 </html>
